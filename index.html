@@ -2,6 +2,7 @@
 <html>
 
 <head>
+    <meta charset="utf-8">
     <title>Marker-based Animal AR - Emotion Switch</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
@@ -76,272 +77,310 @@
             text-align: center;
             border-top: 2px solid rgba(255, 255, 255, 0.3);
         }
+    </style>
+    <script>
+        // --- 状態管理用変数 ---
+        let lastProcessedTimestamp = 0;
+
+        // --- 音声AI統合用変数 ---
+        const SERVER_URL = "wss://chase-unpatient-denice.ngrok-free.dev/ws";
+        const TOKEN = "my_secret_token_123";
+
+        let socket = null;
+        let audioContext = null;
+        let nextStartTime = 0;
 
         // --- シーン初期化時の処理 ---
         document.addEventListener('DOMContentLoaded', function () {
-                const scene=document.querySelector('a-scene');
+            const scene = document.querySelector('a-scene');
 
-                // 音声接続ボタンのイベントリスナー
-                document.getElementById('connect-btn').onclick=async ()=> {
-                    await initAudio();
-                    connectWebSocket();
-                }
+            // 音声接続ボタンのイベントリスナー
+            document.getElementById('connect-btn').onclick = async () => {
+                await initAudio();
+                connectWebSocket();
+            };
 
-                ;
+            if (scene) {
+                scene.addEventListener('loaded', () => {
+                    const happyModel = document.querySelector('#happy-model');
+                    const angryModel = document.querySelector('#angry-model');
 
-                scene.addEventListener('loaded', ()=> {
-                        const happyModel=document.querySelector('#happy-model');
-                        const angryModel=document.querySelector('#angry-model');
-
-                        // モデル切り替え関数
-                        function showModel(emotion) {
-                            if (emotion==='happy') {
-                                console.log("Showing Happy Model");
-                                happyModel.setAttribute('visible', true);
-                                angryModel.setAttribute('visible', false);
-                            }
-
-                            else if (emotion==='angry') {
-                                console.log("Showing Angry Model");
-                                happyModel.setAttribute('visible', false);
-                                angryModel.setAttribute('visible', true);
-                            }
+                    // モデル切り替え関数
+                    function showModel(emotion) {
+                        if (emotion === 'happy') {
+                            console.log("Showing Happy Model");
+                            happyModel.setAttribute('visible', true);
+                            angryModel.setAttribute('visible', false);
+                        } else if (emotion === 'angry') {
+                            console.log("Showing Angry Model");
+                            happyModel.setAttribute('visible', false);
+                            angryModel.setAttribute('visible', true);
                         }
+                    }
 
-                        // 喜び表現
-                        document.getElementById('happy-btn').addEventListener('click', function () {
-                                showModel('happy');
-                            });
-
-                        // 怒り表現
-                        document.getElementById('angry-btn').addEventListener('click', function () {
-                                showModel('angry');
-                            });
-
-                        // --- API設定 ---
-                        let API_ENDPOINT='';
-                        const USER_ID='user_A';
-
-                        // 設定を読み込む
-                        async function loadConfig() {
-                            try {
-                                const response=await fetch('./amplify_outputs.json');
-                                const config=await response.json();
-
-                                if (config.custom && config.custom.API) {
-                                    const apiName=Object.keys(config.custom.API)[0];
-                                    API_ENDPOINT=config.custom.API[apiName].endpoint;
-                                    console.log('API Endpoint loaded:', API_ENDPOINT);
-                                }
-
-                                else {
-                                    console.warn('API configuration not found in amplify_outputs.json');
-                                }
-                            }
-
-                            catch (error) {
-                                console.error('設定ファイルの読み込みエラー:', error);
-                            }
-                        }
-
-                        loadConfig();
-
-                        // --- DBから感情データを取得する関数 ---
-                        async function checkEmotionData() {
-                            if ( !API_ENDPOINT) return;
-
-                            try {
-
-                                // API Gatewayからデータを取得
-                                const response=await fetch(`$ {
-                                        API_ENDPOINT
-                                    }
-
-                                    /data?userId=$ {
-                                        USER_ID
-                                    }
-
-                                    `);
-                                const data=await response.json();
-
-                                // 新しいデータの場合のみ処理
-                                if (data.timestamp && data.timestamp > lastProcessedTimestamp) {
-                                    lastProcessedTimestamp=data.timestamp;
-                                    console.log('新しい感情データ:', data.emotion);
-
-                                    // 感情に応じてボタンをクリック（または直接関数呼び出し）
-                                    switch (data.emotion) {
-                                        case 'happy': showModel('happy');
-                                        break;
-                                        case 'angry': showModel('angry');
-                                        break;
-                                    }
-                                }
-                            }
-
-                            catch (error) {
-                                console.error('感情データの取得エラー:', error);
-                            }
-                        }
-
-                        // 1秒ごとにチェック
-                        setInterval(checkEmotionData, 1000);
-                        console.log('感情データの監視を開始しました');
+                    // 喜び表現
+                    document.getElementById('happy-btn').addEventListener('click', function () {
+                        showModel('happy');
                     });
-            });
+
+                    // 怒り表現
+                    document.getElementById('angry-btn').addEventListener('click', function () {
+                        showModel('angry');
+                    });
+
+                    // --- API設定 ---
+                    let API_ENDPOINT = '';
+                    const USER_ID = 'webapp_user';
+
+                    // 設定を読み込む
+                    async function loadConfig() {
+                        try {
+                            const response = await fetch('./amplify_outputs.json');
+                            const config = await response.json();
+                            if (config.custom && config.custom.API) {
+                                const apiName = Object.keys(config.custom.API)[0];
+                                API_ENDPOINT = config.custom.API[apiName].endpoint;
+                                // 末尾のスラッシュを削除
+                                if (API_ENDPOINT.endsWith('/')) {
+                                    API_ENDPOINT = API_ENDPOINT.slice(0, -1);
+                                }
+                                console.log('API Endpoint loaded:', API_ENDPOINT);
+                            } else {
+                                console.warn('API configuration not found in amplify_outputs.json');
+                            }
+                        } catch (error) {
+                            console.error('設定ファイルの読み込みエラー:', error);
+                        }
+                    }
+
+                    loadConfig();
+
+                    // --- DBから感情データを取得する関数 ---
+                    async function checkEmotionData() {
+                        if (!API_ENDPOINT) return;
+
+                        try {
+                            // API Gatewayからデータを取得
+                            const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}`);
+                            const data = await response.json();
+
+                            // 新しいデータの場合のみ処理
+                            if (data.timestamp && data.timestamp > lastProcessedTimestamp) {
+                                lastProcessedTimestamp = data.timestamp;
+                                console.log('新しいデータ:', data);
+
+                                // has_changeがfalseの場合は無視（手ブレなど）
+                                if (data.has_change === false) {
+                                    console.log('変化なしのためスキップ');
+                                    return;
+                                }
+
+                                // 判定結果(is_valid)に基づくモデル切り替え
+                                // true -> happy (OK), false -> angry (NG)
+                                if (typeof data.is_valid !== 'undefined') {
+                                    if (data.is_valid) {
+                                        showModel('happy');
+                                    } else {
+                                        showModel('angry');
+                                    }
+                                }
+                                // 後方互換性: emotionフィールドがある場合
+                                else if (data.emotion) {
+                                    switch (data.emotion) {
+                                        case 'happy':
+                                            showModel('happy');
+                                            break;
+                                        case 'angry':
+                                            showModel('angry');
+                                            break;
+                                    }
+                                }
+
+                                // メッセージの更新
+                                if (data.message) {
+                                    const messageBox = document.getElementById('message-box');
+                                    if (messageBox) {
+                                        messageBox.innerText = data.message;
+                                    }
+                                }
+                            }
+                        } catch (error) {
+                            console.error('データの取得エラー:', error);
+                        }
+                    }
+
+                    // 1秒ごとにチェック
+                    setInterval(checkEmotionData, 1000);
+                    console.log('データの監視を開始しました');
+                });
+            } else {
+                console.error("a-scene not found!");
+            }
+        });
 
         // ==========================================
         // 3. 音声処理の初期化 (24kHz)
         // ==========================================
         async function initAudio() {
-
             // OpenAI Realtime APIに合わせて 24kHz でコンテキストを作成
-            audioContext=new (window.AudioContext || window.webkitAudioContext)({
-                sampleRate: 24000
-            });
+            audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
 
-        // マイク入力のセットアップ
-        try {
-            const stream=await navigator.mediaDevices.getUserMedia({
-                audio: true
-            });
-        const source=audioContext.createMediaStreamSource(stream);
+            // マイク入力のセットアップ
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const source = audioContext.createMediaStreamSource(stream);
 
-        // PCM16変換用プロセッサ
-        const processor=audioContext.createScriptProcessor(4096, 1, 1);
+                // PCM16変換用プロセッサ
+                const processor = audioContext.createScriptProcessor(4096, 1, 1);
 
-        source.connect(processor);
-        processor.connect(audioContext.destination);
+                source.connect(processor);
+                processor.connect(audioContext.destination);
 
-        processor.onaudioprocess=(e)=> {
-            if ( !socket || socket.readyState !==WebSocket.OPEN) return;
+                processor.onaudioprocess = (e) => {
+                    if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
-            const inputData=e.inputBuffer.getChannelData(0);
-            // Float32 -> Int16 (PCM) 変換
-            const pcmData=floatTo16BitPCM(inputData);
-            // Base64変換
-            const base64Audio=arrayBufferToBase64(pcmData);
+                    const inputData = e.inputBuffer.getChannelData(0);
+                    // Float32 -> Int16 (PCM) 変換
+                    const pcmData = floatTo16BitPCM(inputData);
+                    // Base64変換
+                    const base64Audio = arrayBufferToBase64(pcmData);
 
-            // サーバーへ送信
-            socket.send(JSON.stringify({
-                    type: "input_audio_buffer.append",
-                    audio: base64Audio
-                }));
-        }
-
-        ;
-        }
-
-        catch (err) {
-            console.error("マイク許可エラー:", err);
-            alert("マイクの使用を許可してください");
-        }
+                    // サーバーへ送信
+                    socket.send(JSON.stringify({
+                        type: "input_audio_buffer.append",
+                        audio: base64Audio
+                    }));
+                };
+            } catch (err) {
+                console.error("マイク許可エラー:", err);
+                alert("マイクの使用を許可してください");
+            }
         }
 
         // ==========================================
         // 4. WebSocket接続
         // ==========================================
         function connectWebSocket() {
-            const url=`$ {
-                SERVER_URL
-            }
+            const url = `${SERVER_URL}?role=ar&token=${TOKEN}`;
+            socket = new WebSocket(url);
 
-            ?role=ar&token=$ {
-                TOKEN
-            }
-
-            `;
-            socket=new WebSocket(url);
-
-            socket.onopen=()=> {
-                document.getElementById('status').innerText="接続中 (role=ar)";
+            socket.onopen = () => {
+                document.getElementById('status').innerText = "接続中 (role=ar)";
                 console.log("Connected to Server");
-            }
+            };
 
-            ;
-
-            socket.onmessage=async (event)=> {
-                const data=JSON.parse(event.data);
+            socket.onmessage = async (event) => {
+                const data = JSON.parse(event.data);
 
                 // 音声データ受信 (response.audio.delta)
-                if (data.type==="response.audio.delta") {
+                if (data.type === "response.audio.delta") {
                     playAudio(data.delta);
                 }
-            }
+            };
 
-            ;
-
-            socket.onclose=()=> {
-                document.getElementById('status').innerText="切断されました";
-            }
-
-            ;
+            socket.onclose = () => {
+                document.getElementById('status').innerText = "切断されました";
+            };
         }
 
         // ==========================================
         // 5. 音声再生 (Base64 -> Audio)
         // ==========================================
         function playAudio(base64Data) {
-            const binaryString=atob(base64Data);
-            const len=binaryString.length;
-            const bytes=new Uint8Array(len);
-
-            for (let i=0; i < len; i++) {
-                bytes[i]=binaryString.charCodeAt(i);
+            const binaryString = atob(base64Data);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
             }
-
-            const int16Data=new Int16Array(bytes.buffer);
-            const floatData=new Float32Array(int16Data.length);
+            const int16Data = new Int16Array(bytes.buffer);
+            const floatData = new Float32Array(int16Data.length);
 
             // Int16 -> Float32 変換
-            for (let i=0; i < int16Data.length; i++) {
-                floatData[i]=int16Data[i] / 32768.0;
+            for (let i = 0; i < int16Data.length; i++) {
+                floatData[i] = int16Data[i] / 32768.0;
             }
 
             // バッファ作成
-            const buffer=audioContext.createBuffer(1, floatData.length, 24000);
+            const buffer = audioContext.createBuffer(1, floatData.length, 24000);
             buffer.getChannelData(0).set(floatData);
 
             // 再生キューイング（途切れないように時間を管理）
-            const source=audioContext.createBufferSource();
-            source.buffer=buffer;
+            const source = audioContext.createBufferSource();
+            source.buffer = buffer;
             source.connect(audioContext.destination);
 
-            const currentTime=audioContext.currentTime;
-
+            const currentTime = audioContext.currentTime;
             if (nextStartTime < currentTime) {
-                nextStartTime=currentTime;
+                nextStartTime = currentTime;
             }
-
             source.start(nextStartTime);
-            nextStartTime+=buffer.duration;
+            nextStartTime += buffer.duration;
         }
 
         // ユーティリティ: Float32 -> Int16
         function floatTo16BitPCM(input) {
-            const output=new Int16Array(input.length);
-
-            for (let i=0; i < input.length; i++) {
-                let s=Math.max(-1, Math.min(1, input[i]));
-                output[i]=s < 0 ? s * 0x8000: s * 0x7FFF;
+            const output = new Int16Array(input.length);
+            for (let i = 0; i < input.length; i++) {
+                let s = Math.max(-1, Math.min(1, input[i]));
+                output[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
             }
-
             return output.buffer;
         }
 
         // ユーティリティ: ArrayBuffer -> Base64
         function arrayBufferToBase64(buffer) {
-            let binary='';
-            const bytes=new Uint8Array(buffer);
-            const len=bytes.byteLength;
-
-            for (let i=0; i < len; i++) {
-                binary+=String.fromCharCode(bytes[i]);
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
             }
-
             return window.btoa(binary);
         }
+    </script>
+</head>
 
-        </script></head><body style="margin: 0; overflow: hidden;">< !-- UIボタン --><button id="connect-btn" class="ui-button">🎤 音声接続開始</button><div id="status">未接続</div><button id="happy-btn" class="ui-button">😊 喜び</button><button id="angry-btn" class="ui-button">😠 怒り</button>< !-- メッセージボックス --><div id="message-box">お野菜の届きつつ待ちください。どんどこいです！ </div><a-scene embedded arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'><a-assets><a-asset-item id="happy-asset" src="Animation_Happy_Sway_Standing_withSkin.glb"></a-asset-item><a-asset-item id="angry-asset" src="Animation_Angry_To_Tantrum_Sit_withSkin.glb"></a-asset-item></a-assets>< !-- Custom Marker --><a-marker type='pattern' url='pattern-WBF.patt?v=3'><a-entity id="model-container">< !-- Happy Model (Default Visible) --><a-gltf-model id="happy-model" src="#happy-asset" position="0 0 0" rotation="0 0 0" scale="1 1 1"
-        animation-mixer visible="true"></a-gltf-model>< !-- Angry Model (Hidden) --><a-gltf-model id="angry-model" src="#angry-asset" position="0 0 0" rotation="0 0 0" scale="1 1 1"
-        animation-mixer visible="false"></a-gltf-model></a-entity></a-marker><a-entity camera></a-entity></a-scene></body></html>
+<body style="margin: 0; overflow: hidden;">
+    <!-- UIボタン -->
+    <button id="connect-btn" class="ui-button">🎤 音声接続開始</button>
+    <div id="status">未接続</div>
+
+    <button id="happy-btn" class="ui-button">😊 喜び</button>
+    <button id="angry-btn" class="ui-button">😠 怒り</button>
+
+    <!-- メッセージボックス -->
+    <div id="message-box">
+        アカン、キャップついてるやんけ！
+    </div>
+
+    <a-scene embedded arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'>
+
+        <a-assets>
+            <a-asset-item id="happy-asset" src="Animation_Happy_Sway_Standing_withSkin.glb"></a-asset-item>
+            <a-asset-item id="angry-asset" src="Animation_Angry_To_Tantrum_Sit_withSkin.glb"></a-asset-item>
+        </a-assets>
+
+        <!-- Custom Marker -->
+        <a-marker type='pattern' url='pattern-WBF.patt?v=3'>
+
+            <a-entity id="model-container">
+                <!-- Happy Model (Default Visible) -->
+                <a-gltf-model id="happy-model" src="#happy-asset" position="0 0 0" rotation="0 0 0" scale="1 1 1"
+                    animation-mixer visible="true">
+                </a-gltf-model>
+
+                <!-- Angry Model (Hidden) -->
+                <a-gltf-model id="angry-model" src="#angry-asset" position="0 0 0" rotation="0 0 0" scale="1 1 1"
+                    animation-mixer visible="false">
+                </a-gltf-model>
+            </a-entity>
+
+        </a-marker>
+
+        <a-entity camera></a-entity>
+
+    </a-scene>
+</body>
+
+</html>
