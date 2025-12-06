@@ -1,0 +1,13 @@
+{
+    "name": "api-function",
+    "version": "1.0.0",
+    "type": "module",
+    "dependencies": {
+        "@aws-sdk/client-dynamodb": "^3.0.0",
+        "@aws-sdk/lib-dynamodb": "^3.0.0"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.0",
+        "@types/node": "^20.19.25"
+    }
+}
