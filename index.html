@@ -40,6 +40,28 @@
             background: rgba(255, 153, 153, 0.9);
         }
 
+        #connect-btn {
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(173, 216, 230, 0.9);
+            /* Light Blue */
+        }
+
+        #status {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
         #message-box {
             position: fixed;
             bottom: 0;
@@ -59,9 +81,23 @@
         // --- 状態管理用変数 ---
         let lastProcessedTimestamp = 0;
 
+        // --- 音声AI統合用変数 ---
+        const SERVER_URL = "wss://YOUR_NGROK_URL/ws"; // カメラ側と同じngrok URL
+        const TOKEN = "YOUR_TOKEN";                   // .envで設定した共通トークン
+
+        let socket = null;
+        let audioContext = null;
+        let nextStartTime = 0;
+
         // --- シーン初期化時の処理 ---
         document.addEventListener('DOMContentLoaded', function () {
             const scene = document.querySelector('a-scene');
+
+            // 音声接続ボタンのイベントリスナー
+            document.getElementById('connect-btn').onclick = async () => {
+                await initAudio();
+                connectWebSocket();
+            };
 
             scene.addEventListener('loaded', () => {
                 const happyModel = document.querySelector('#happy-model');
@@ -147,11 +183,135 @@
                 console.log('感情データの監視を開始しました');
             });
         });
+
+        // ==========================================
+        // 3. 音声処理の初期化 (24kHz)
+        // ==========================================
+        async function initAudio() {
+            // OpenAI Realtime APIに合わせて 24kHz でコンテキストを作成
+            audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+
+            // マイク入力のセットアップ
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const source = audioContext.createMediaStreamSource(stream);
+
+                // PCM16変換用プロセッサ
+                const processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+                source.connect(processor);
+                processor.connect(audioContext.destination);
+
+                processor.onaudioprocess = (e) => {
+                    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+
+                    const inputData = e.inputBuffer.getChannelData(0);
+                    // Float32 -> Int16 (PCM) 変換
+                    const pcmData = floatTo16BitPCM(inputData);
+                    // Base64変換
+                    const base64Audio = arrayBufferToBase64(pcmData);
+
+                    // サーバーへ送信
+                    socket.send(JSON.stringify({
+                        type: "input_audio_buffer.append",
+                        audio: base64Audio
+                    }));
+                };
+            } catch (err) {
+                console.error("マイク許可エラー:", err);
+                alert("マイクの使用を許可してください");
+            }
+        }
+
+        // ==========================================
+        // 4. WebSocket接続
+        // ==========================================
+        function connectWebSocket() {
+            const url = `${SERVER_URL}?role=ar&token=${TOKEN}`;
+            socket = new WebSocket(url);
+
+            socket.onopen = () => {
+                document.getElementById('status').innerText = "接続中 (role=ar)";
+                console.log("Connected to Server");
+            };
+
+            socket.onmessage = async (event) => {
+                const data = JSON.parse(event.data);
+
+                // 音声データ受信 (response.audio.delta)
+                if (data.type === "response.audio.delta") {
+                    playAudio(data.delta);
+                }
+            };
+
+            socket.onclose = () => {
+                document.getElementById('status').innerText = "切断されました";
+            };
+        }
+
+        // ==========================================
+        // 5. 音声再生 (Base64 -> Audio)
+        // ==========================================
+        function playAudio(base64Data) {
+            const binaryString = atob(base64Data);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            const int16Data = new Int16Array(bytes.buffer);
+            const floatData = new Float32Array(int16Data.length);
+
+            // Int16 -> Float32 変換
+            for (let i = 0; i < int16Data.length; i++) {
+                floatData[i] = int16Data[i] / 32768.0;
+            }
+
+            // バッファ作成
+            const buffer = audioContext.createBuffer(1, floatData.length, 24000);
+            buffer.getChannelData(0).set(floatData);
+
+            // 再生キューイング（途切れないように時間を管理）
+            const source = audioContext.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioContext.destination);
+
+            const currentTime = audioContext.currentTime;
+            if (nextStartTime < currentTime) {
+                nextStartTime = currentTime;
+            }
+            source.start(nextStartTime);
+            nextStartTime += buffer.duration;
+        }
+
+        // ユーティリティ: Float32 -> Int16
+        function floatTo16BitPCM(input) {
+            const output = new Int16Array(input.length);
+            for (let i = 0; i < input.length; i++) {
+                let s = Math.max(-1, Math.min(1, input[i]));
+                output[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+            }
+            return output.buffer;
+        }
+
+        // ユーティリティ: ArrayBuffer -> Base64
+        function arrayBufferToBase64(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+        }
     </script>
 </head>
 
 <body style="margin: 0; overflow: hidden;">
     <!-- UIボタン -->
+    <button id="connect-btn" class="ui-button">🎤 音声接続開始</button>
+    <div id="status">未接続</div>
+
     <button id="happy-btn" class="ui-button">😊 喜び</button>
     <button id="angry-btn" class="ui-button">😠 怒り</button>
 
