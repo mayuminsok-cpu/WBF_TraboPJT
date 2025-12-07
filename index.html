@@ -119,8 +119,14 @@
             if (scene) {
                 scene.addEventListener('loaded', () => {
                     // --- モデル参照 ---
-                    const happyModel = document.querySelector('#happy-model');
-                    const angryModel = document.querySelector('#angry-model');
+                    const joyfulModel = document.querySelector('#joyful-model');
+                    const happy1Model = document.querySelector('#happy-1-model');
+                    const happy2Model = document.querySelector('#happy-2-model');
+                    const angry1Model = document.querySelector('#angry-1-model');
+                    const angry2Model = document.querySelector('#angry-2-model');
+
+                    // 全モデルの配列
+                    const allModels = [joyfulModel, happy1Model, happy2Model, angry1Model, angry2Model];
 
                     // --- 召喚ロジック変数 ---
                     const summonBtn = document.getElementById('summon-btn');
@@ -132,24 +138,63 @@
                     let isSummoned = false;
                     let hasChangedToRecycleBuddy = false; // モデルチェンジ済みフラグ
                     let recycleBuddyModel = null; // WBFマーカー上のRecycle Buddyモデル
+                    let currentEmotion = null; // 現在のエモーション
+                    let emotionTimeout = null; // エモーション終了後のタイムアウト
 
-                    // --- モデル切り替え関数 ---
+                    // --- 全モデルを非表示にする関数 ---
+                    function hideAllModels() {
+                        allModels.forEach(model => {
+                            if (model) model.setAttribute('visible', false);
+                        });
+                    }
+
+                    // --- Joyful（待機状態）を表示 ---
+                    function showJoyful() {
+                        if (hasChangedToRecycleBuddy) return;
+                        hideAllModels();
+                        joyfulModel.setAttribute('visible', true);
+                        console.log("Showing Joyful (Idle) Model");
+                    }
+
+                    // --- モデル切り替え関数（ランダム選択） ---
                     function showModel(emotion) {
                         // モデルチェンジ済みの場合は何もしない
                         if (hasChangedToRecycleBuddy) return;
 
+                        // 既存のタイムアウトをクリア
+                        if (emotionTimeout) {
+                            clearTimeout(emotionTimeout);
+                            emotionTimeout = null;
+                        }
+
+                        hideAllModels();
+                        currentEmotion = emotion;
+
                         if (emotion === 'happy') {
-                            console.log("Showing Happy Model");
-                            happyModel.setAttribute('visible', true);
-                            angryModel.setAttribute('visible', false);
+                            // ランダムでHappy1またはHappy2を選択
+                            const randomHappy = Math.random() < 0.5 ? happy1Model : happy2Model;
+                            randomHappy.setAttribute('visible', true);
+                            console.log(`Showing Happy Model: ${randomHappy.id}`);
+
+                            // アニメーション終了後にJoyfulに戻る
+                            emotionTimeout = setTimeout(() => {
+                                showJoyful();
+                            }, 3000); // 3秒後（アニメーション時間に応じて調整）
+
                         } else if (emotion === 'angry') {
-                            console.log("Showing Angry Model");
-                            happyModel.setAttribute('visible', false);
-                            angryModel.setAttribute('visible', true);
+                            // ランダムでAngry1またはAngry2を選択
+                            const randomAngry = Math.random() < 0.5 ? angry1Model : angry2Model;
+                            randomAngry.setAttribute('visible', true);
+                            console.log(`Showing Angry Model: ${randomAngry.id}`);
+
+                            // アニメーション終了後にJoyfulに戻る
+                            emotionTimeout = setTimeout(() => {
+                                showJoyful();
+                            }, 3000); // 3秒後（アニメーション時間に応じて調整）
                         }
                     }
 
-                    // 喜び表現
+                    // 喜び表現（手動ボタン）
                     document.getElementById('happy-btn').addEventListener('click', function () {
                         showModel('happy');
                     });
@@ -192,28 +237,14 @@
                         if (!isSummoned) {
                             // 召喚前：ボタンを表示、モデルを隠す
                             summonBtn.style.display = 'block';
-                            if (model) model.setAttribute('visible', false);
-
-                            // WBFの場合は両方隠す
-                            if (marker === wbfMarker) {
-                                happyModel.setAttribute('visible', false);
-                                angryModel.setAttribute('visible', false);
-                            }
+                            hideAllModels();
                         } else {
-                            // 既に召喚済みなら、モデルを即座に表示
+                            // 既に召喚済みなら、Joyfulまたは現在のエモーションを表示
                             if (marker === wbfMarker) {
-                                // WBFの場合は、現在アクティブなモデルを表示
-                                // happyまたはangryのどちらかが既にvisible=trueのはず
-                                const isHappyVisible = happyModel.getAttribute('visible');
-                                const isAngryVisible = angryModel.getAttribute('visible');
-
-                                if (isHappyVisible) {
-                                    happyModel.setAttribute('visible', true);
-                                } else if (isAngryVisible) {
-                                    angryModel.setAttribute('visible', true);
+                                if (currentEmotion) {
+                                    showModel(currentEmotion);
                                 } else {
-                                    // デフォルトでHappyを表示
-                                    happyModel.setAttribute('visible', true);
+                                    showJoyful();
                                 }
                             } else if (currentTargetModel) {
                                 currentTargetModel.setAttribute('visible', true);
@@ -227,9 +258,8 @@
                         // isSummonedはリセットしない（一度召喚したら次回も表示）
 
                         // 全モデル非表示
+                        hideAllModels();
                         if (currentTargetModel) currentTargetModel.setAttribute('visible', false);
-                        happyModel.setAttribute('visible', false);
-                        angryModel.setAttribute('visible', false);
                         if (buddyModel) buddyModel.setAttribute('visible', false);
 
                         currentVisibleMarker = null;
@@ -254,11 +284,9 @@
                             summonBtn.style.display = 'none';
                             isSummoned = true; // フラグON
 
-                            // モデルは表示せず、データベースの更新を待つ
-                            // WBFマーカーの場合は両方非表示のまま
+                            // Joyful（待機状態）を表示
                             if (currentVisibleMarker === wbfMarker) {
-                                happyModel.setAttribute('visible', false);
-                                angryModel.setAttribute('visible', false);
+                                showJoyful();
                             } else if (currentTargetModel) {
                                 // Hiroマーカーの場合も非表示
                                 currentTargetModel.setAttribute('visible', false);
@@ -272,7 +300,7 @@
                                 }, 2000);
                             }
 
-                            console.log('召喚完了。データベースの更新を待機中...');
+                            console.log('召喚完了。Joyful（待機状態）を表示。データベースの更新を待機中...');
                         }
                     });
 
@@ -535,8 +563,19 @@
     <a-scene embedded arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'>
 
         <a-assets>
-            <a-asset-item id="happy-asset" src="Animation_Happy_Sway_Standing_withSkin.glb"></a-asset-item>
-            <a-asset-item id="angry-asset" src="Animation_Angry_To_Tantrum_Sit_withSkin.glb"></a-asset-item>
+            <!-- Happy animations (2 variants) -->
+            <a-asset-item id="happy-1-asset" src="chibi_Animation_Happy_Sway_Standing_withSkin.glb"></a-asset-item>
+            <a-asset-item id="happy-2-asset" src="chibi_Animation_Happy_turn_F_withSkin.glb"></a-asset-item>
+
+            <!-- Angry animations (2 variants) -->
+            <a-asset-item id="angry-1-asset" src="chibi_Animation_Angry_Ground_Stomp_2_withSkin.glb"></a-asset-item>
+            <a-asset-item id="angry-2-asset" src="chibi_Animation_angry_Fist_Pump_withSkin.glb"></a-asset-item>
+
+            <!-- Joyful (idle/waiting state) -->
+            <a-asset-item id="joyful-asset"
+                src="chibi_Animation_Joyful_Dance_with_Hand_Sway_withSkin.glb"></a-asset-item>
+
+            <!-- Recycle Buddy -->
             <a-asset-item id="buddy-asset" src="Recycle_Buddy_1203165406_texture.glb"></a-asset-item>
         </a-assets>
 
@@ -544,13 +583,24 @@
         <a-marker type='pattern' url='pattern-WBF.patt?v=3'>
 
             <a-entity id="model-container">
-                <!-- Happy Model (Default Visible) -->
-                <a-gltf-model id="happy-model" src="#happy-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
-                    animation-mixer="loop: once" visible="true">
+                <!-- Joyful (Idle/Waiting State) -->
+                <a-gltf-model id="joyful-model" src="#joyful-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
+                    animation-mixer="loop: repeat" visible="false">
                 </a-gltf-model>
 
-                <!-- Angry Model (Hidden) -->
-                <a-gltf-model id="angry-model" src="#angry-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
+                <!-- Happy Models (2 variants) -->
+                <a-gltf-model id="happy-1-model" src="#happy-1-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
+                    animation-mixer="loop: once" visible="false">
+                </a-gltf-model>
+                <a-gltf-model id="happy-2-model" src="#happy-2-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
+                    animation-mixer="loop: once" visible="false">
+                </a-gltf-model>
+
+                <!-- Angry Models (2 variants) -->
+                <a-gltf-model id="angry-1-model" src="#angry-1-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
+                    animation-mixer="loop: once" visible="false">
+                </a-gltf-model>
+                <a-gltf-model id="angry-2-model" src="#angry-2-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
                     animation-mixer="loop: once" visible="false">
                 </a-gltf-model>
             </a-entity>
