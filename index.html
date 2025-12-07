@@ -135,8 +135,8 @@
 
                     // --- モデル切り替え関数 ---
                     function showModel(emotion) {
-                        // 召喚されていなければ表示しない
-                        if (!isSummoned) return;
+                        // モデルチェンジ済みの場合は何もしない
+                        if (hasChangedToRecycleBuddy) return;
 
                         if (emotion === 'happy') {
                             console.log("Showing Happy Model");
