@@ -198,14 +198,31 @@
                                 angryModel.setAttribute('visible', false);
                             }
                         } else {
-                            // 既に召喚済みなら何もしない（showModel任せ）
+                            // 既に召喚済みなら、モデルを即座に表示
+                            if (marker === wbfMarker) {
+                                // WBFの場合は、現在アクティブなモデルを表示
+                                // happyまたはangryのどちらかが既にvisible=trueのはず
+                                const isHappyVisible = happyModel.getAttribute('visible');
+                                const isAngryVisible = angryModel.getAttribute('visible');
+
+                                if (isHappyVisible) {
+                                    happyModel.setAttribute('visible', true);
+                                } else if (isAngryVisible) {
+                                    angryModel.setAttribute('visible', true);
+                                } else {
+                                    // デフォルトでHappyを表示
+                                    happyModel.setAttribute('visible', true);
+                                }
+                            } else if (currentTargetModel) {
+                                currentTargetModel.setAttribute('visible', true);
+                            }
                         }
                     }
 
                     // --- マーカーロスト時の処理 ---
                     function handleMarkerLost() {
                         summonBtn.style.display = 'none';
-                        isSummoned = false; // リセット
+                        // isSummonedはリセットしない（一度召喚したら次回も表示）
 
                         // 全モデル非表示
                         if (currentTargetModel) currentTargetModel.setAttribute('visible', false);
