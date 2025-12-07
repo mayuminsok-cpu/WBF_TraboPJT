@@ -267,8 +267,9 @@
                             const randomAngry = Math.random() < 0.5 ? angry1Model : angry2Model;
                             randomAngry.setAttribute('visible', true);
 
-                            // 怒りアイコンを表示
-                            if (angerIcon) angerIcon.setAttribute('visible', true);
+
+                            // 画面固定の怒りアイコンを表示
+                            showEmotionIcons('angry');
 
                             console.log(`Showing Angry Model: ${randomAngry.id}`);
 
