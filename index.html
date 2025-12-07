@@ -124,6 +124,7 @@
                     const happy2Model = document.querySelector('#happy-2-model');
                     const angry1Model = document.querySelector('#angry-1-model');
                     const angry2Model = document.querySelector('#angry-2-model');
+                    const angerIcon = document.querySelector('#anger-icon');
 
                     // 全モデルの配列
                     const allModels = [joyfulModel, happy1Model, happy2Model, angry1Model, angry2Model];
@@ -146,6 +147,8 @@
                         allModels.forEach(model => {
                             if (model) model.setAttribute('visible', false);
                         });
+                        // 怒りアイコンも非表示
+                        if (angerIcon) angerIcon.setAttribute('visible', false);
                     }
 
                     // --- Joyful（待機状態）を表示 ---
@@ -185,9 +188,13 @@
                             // ランダムでAngry1またはAngry2を選択
                             const randomAngry = Math.random() < 0.5 ? angry1Model : angry2Model;
                             randomAngry.setAttribute('visible', true);
+
+                            // 怒りアイコンを表示
+                            if (angerIcon) angerIcon.setAttribute('visible', true);
+
                             console.log(`Showing Angry Model: ${randomAngry.id}`);
 
-                            // アニメーション終了後にJoyfulに戻る
+                            // アニメーション終了後にJoyfulに戻る（アイコンも非表示）
                             emotionTimeout = setTimeout(() => {
                                 showJoyful();
                             }, 3000); // 3秒後（アニメーション時間に応じて調整）
@@ -603,6 +610,11 @@
                 <a-gltf-model id="angry-2-model" src="#angry-2-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
                     animation-mixer="loop: once" visible="false">
                 </a-gltf-model>
+
+                <!-- Anger Icon (💢) -->
+                <a-text id="anger-icon" value="💢" position="-0.5 2 0" rotation="0 0 0" scale="2 2 2" color="#FF0000"
+                    align="center" visible="false">
+                </a-text>
             </a-entity>
 
         </a-marker>
