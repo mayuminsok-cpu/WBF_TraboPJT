@@ -208,11 +208,21 @@
 
                     // 喜び表現（手動ボタン）
                     document.getElementById('happy-btn').addEventListener('click', function () {
+                        // 召喚されていなければ自動召喚
+                        if (!isSummoned) {
+                            isSummoned = true;
+                            summonBtn.style.display = 'none';
+                        }
                         showModel('happy');
                     });
 
-                    // 怒り表現
+                    // 怒り表現（手動ボタン）
                     document.getElementById('angry-btn').addEventListener('click', function () {
+                        // 召喚されていなければ自動召喚
+                        if (!isSummoned) {
+                            isSummoned = true;
+                            summonBtn.style.display = 'none';
+                        }
                         showModel('angry');
                     });
 
