@@ -124,6 +124,7 @@
                     const angry1Model = document.querySelector('#angry-1-model');
                     const angry2Model = document.querySelector('#angry-2-model');
                     const angerIcon = document.querySelector('#anger-icon');
+                    const heartIcon = document.querySelector('#heart-icon');
 
                     // 全モデルの配列
                     const allModels = [joyfulModel, happy1Model, happy2Model, angry1Model, angry2Model];
@@ -146,8 +147,9 @@
                         allModels.forEach(model => {
                             if (model) model.setAttribute('visible', false);
                         });
-                        // 怒りアイコンも非表示
+                        // 怒りアイコンとハートアイコンも非表示
                         if (angerIcon) angerIcon.setAttribute('visible', false);
+                        if (heartIcon) heartIcon.setAttribute('visible', false);
                     }
 
                     // --- Joyful（待機状態）を表示 ---
@@ -176,6 +178,10 @@
                             // ランダムでHappy1またはHappy2を選択
                             const randomHappy = Math.random() < 0.5 ? happy1Model : happy2Model;
                             randomHappy.setAttribute('visible', true);
+
+                            // ハートアイコンを表示
+                            if (heartIcon) heartIcon.setAttribute('visible', true);
+
                             console.log(`Showing Happy Model: ${randomHappy.id}`);
 
                             // アニメーション終了後にJoyfulに戻る
