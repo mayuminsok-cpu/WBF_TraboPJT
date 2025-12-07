@@ -130,6 +130,8 @@
 
                     // 召喚状態フラグ
                     let isSummoned = false;
+                    let hasChangedToRecycleBuddy = false; // モデルチェンジ済みフラグ
+                    let recycleBuddyModel = null; // WBFマーカー上のRecycle Buddyモデル
 
                     // --- モデル切り替え関数 ---
                     function showModel(emotion) {
@@ -313,6 +315,8 @@
                                 if (typeof data.is_valid !== 'undefined') {
                                     if (data.is_valid) {
                                         showModel('happy');
+                                        // 連続成功チェック
+                                        await checkConsecutiveSuccess(data.timestamp);
                                     } else {
                                         showModel('angry');
                                     }
@@ -330,6 +334,75 @@
                         } catch (error) {
                             console.error('データの取得エラー:', error);
                         }
+                    }
+
+                    // --- 連続成功チェック関数 ---
+                    async function checkConsecutiveSuccess(currentTimestamp) {
+                        if (hasChangedToRecycleBuddy) return; // 既にモデルチェンジ済み
+
+                        try {
+                            // 最新2件を取得
+                            const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}&limit=2`);
+                            const data = await response.json();
+
+                            // レスポンスがItemsを持つか、単一オブジェクトかを確認
+                            const records = data.Items || [data];
+
+                            if (records.length >= 2) {
+                                const latest = records[0];
+                                const previous = records[1];
+
+                                // 両方ともis_valid=trueかチェック
+                                if (latest.is_valid === true && previous.is_valid === true) {
+                                    console.log('連続成功検出！モデルチェンジを実行');
+                                    triggerModelChange();
+                                }
+                            }
+                        } catch (error) {
+                            console.error('連続成功チェックエラー:', error);
+                        }
+                    }
+
+                    // --- モデルチェンジ関数 ---
+                    function triggerModelChange() {
+                        if (hasChangedToRecycleBuddy) return;
+
+                        hasChangedToRecycleBuddy = true;
+
+                        // Happy/Angryモデルを非表示
+                        happyModel.setAttribute('visible', false);
+                        angryModel.setAttribute('visible', false);
+
+                        // WBFマーカー上にRecycle Buddyを作成
+                        recycleBuddyModel = document.createElement('a-gltf-model');
+                        recycleBuddyModel.setAttribute('src', '#buddy-asset');
+                        recycleBuddyModel.setAttribute('position', '0 0 0');
+                        recycleBuddyModel.setAttribute('rotation', '0 0 0');
+                        recycleBuddyModel.setAttribute('scale', '1.5 1.5 1.5');
+                        recycleBuddyModel.setAttribute('animation-mixer', 'loop: once');
+                        recycleBuddyModel.setAttribute('visible', true);
+
+                        // WBFマーカーのmodel-containerに追加
+                        const modelContainer = document.getElementById('model-container');
+                        if (modelContainer) {
+                            modelContainer.appendChild(recycleBuddyModel);
+                        }
+
+                        // メッセージ更新
+                        const messageBox = document.getElementById('message-box');
+                        if (messageBox) {
+                            messageBox.innerText = 'すごい！2回連続成功や！リサイクルバディ登場！';
+                        }
+
+                        // お祝いエフェクト
+                        if (wbfParticles) {
+                            wbfParticles.setAttribute('particle-system', 'enabled', true);
+                            setTimeout(() => {
+                                wbfParticles.setAttribute('particle-system', 'enabled', false);
+                            }, 3000);
+                        }
+
+                        console.log('モデルチェンジ完了: Recycle Buddy表示');
                     }
 
                     // 1秒ごとにチェック
