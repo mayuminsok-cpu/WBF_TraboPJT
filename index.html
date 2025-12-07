@@ -254,12 +254,14 @@
                             summonBtn.style.display = 'none';
                             isSummoned = true; // フラグON
 
-                            // モデル表示
+                            // モデルは表示せず、データベースの更新を待つ
+                            // WBFマーカーの場合は両方非表示のまま
                             if (currentVisibleMarker === wbfMarker) {
-                                // とりあえずHappyを表示（すぐにAPIデータ更新があれば上書きされる）
-                                happyModel.setAttribute('visible', true);
+                                happyModel.setAttribute('visible', false);
+                                angryModel.setAttribute('visible', false);
                             } else if (currentTargetModel) {
-                                currentTargetModel.setAttribute('visible', true);
+                                // Hiroマーカーの場合も非表示
+                                currentTargetModel.setAttribute('visible', false);
                             }
 
                             // パーティクル発火
@@ -269,6 +271,8 @@
                                     currentParticles.setAttribute('particle-system', 'enabled', false);
                                 }, 2000);
                             }
+
+                            console.log('召喚完了。データベースの更新を待機中...');
                         }
                     });
 
