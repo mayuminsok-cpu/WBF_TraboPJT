@@ -7,6 +7,8 @@
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.2.0/dist/aframe-extras.min.js"></script>
+    <script
+        src="https://unpkg.com/aframe-particle-system-component@1.0.x/dist/aframe-particle-system-component.min.js"></script>
     <style>
         .ui-button {
             position: absolute;
@@ -46,7 +48,21 @@
             left: 50%;
             transform: translateX(-50%);
             background: rgba(173, 216, 230, 0.9);
-            /* Light Blue */
+        }
+
+        #summon-btn {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 215, 0, 0.9);
+            /* Gold */
+            color: black;
+            font-size: 24px;
+            padding: 20px 40px;
+            border: 3px solid #fff;
+            display: none;
+            /* Initially hidden */
+            z-index: 2000;
         }
 
         #status {
@@ -102,11 +118,24 @@
 
             if (scene) {
                 scene.addEventListener('loaded', () => {
+                    // --- モデル参照 ---
                     const happyModel = document.querySelector('#happy-model');
                     const angryModel = document.querySelector('#angry-model');
 
-                    // モデル切り替え関数
+                    // --- 召喚ロジック変数 ---
+                    const summonBtn = document.getElementById('summon-btn');
+                    const wbfMarker = document.querySelector('a-marker[url*="pattern-WBF"]');
+                    const hiroMarker = document.querySelector('a-marker[preset="hiro"]');
+                    const buddyModel = document.querySelector('a-marker[preset="hiro"] > a-gltf-model');
+
+                    // 召喚状態フラグ
+                    let isSummoned = false;
+
+                    // --- モデル切り替え関数 ---
                     function showModel(emotion) {
+                        // 召喚されていなければ表示しない
+                        if (!isSummoned) return;
+
                         if (emotion === 'happy') {
                             console.log("Showing Happy Model");
                             happyModel.setAttribute('visible', true);
@@ -126,6 +155,102 @@
                     // 怒り表現
                     document.getElementById('angry-btn').addEventListener('click', function () {
                         showModel('angry');
+                    });
+
+                    // --- パーティクルシステム追加関数 ---
+                    function addParticleSystem(markerElement) {
+                        const particleEntity = document.createElement('a-entity');
+                        particleEntity.setAttribute('position', '0 0 0');
+                        particleEntity.setAttribute('particle-system', {
+                            preset: 'star',
+                            color: '#FFD700,#FFFFFF',
+                            particleCount: 200,
+                            size: 0.5,
+                            maxAge: 2,
+                            duration: 1,
+                            enabled: false
+                        });
+                        markerElement.appendChild(particleEntity);
+                        return particleEntity;
+                    }
+
+                    const wbfParticles = addParticleSystem(wbfMarker);
+                    const hiroParticles = addParticleSystem(hiroMarker);
+
+                    let currentVisibleMarker = null;
+                    let currentTargetModel = null;
+                    let currentParticles = null;
+
+                    // --- マーカー検出時の処理 ---
+                    function handleMarkerFound(marker, model, particles) {
+                        currentVisibleMarker = marker;
+                        currentTargetModel = model;
+                        currentParticles = particles;
+
+                        if (!isSummoned) {
+                            // 召喚前：ボタンを表示、モデルを隠す
+                            summonBtn.style.display = 'block';
+                            if (model) model.setAttribute('visible', false);
+
+                            // WBFの場合は両方隠す
+                            if (marker === wbfMarker) {
+                                happyModel.setAttribute('visible', false);
+                                angryModel.setAttribute('visible', false);
+                            }
+                        } else {
+                            // 既に召喚済みなら何もしない（showModel任せ）
+                        }
+                    }
+
+                    // --- マーカーロスト時の処理 ---
+                    function handleMarkerLost() {
+                        summonBtn.style.display = 'none';
+                        isSummoned = false; // リセット
+
+                        // 全モデル非表示
+                        if (currentTargetModel) currentTargetModel.setAttribute('visible', false);
+                        happyModel.setAttribute('visible', false);
+                        angryModel.setAttribute('visible', false);
+                        if (buddyModel) buddyModel.setAttribute('visible', false);
+
+                        currentVisibleMarker = null;
+                        currentTargetModel = null;
+                        currentParticles = null;
+                    }
+
+                    // イベントリスナー登録
+                    wbfMarker.addEventListener('markerFound', () => {
+                        handleMarkerFound(wbfMarker, happyModel, wbfParticles);
+                    });
+                    wbfMarker.addEventListener('markerLost', handleMarkerLost);
+
+                    hiroMarker.addEventListener('markerFound', () => {
+                        handleMarkerFound(hiroMarker, buddyModel, hiroParticles);
+                    });
+                    hiroMarker.addEventListener('markerLost', handleMarkerLost);
+
+                    // --- 召喚ボタンクリックイベント ---
+                    summonBtn.addEventListener('click', () => {
+                        if (currentVisibleMarker) {
+                            summonBtn.style.display = 'none';
+                            isSummoned = true; // フラグON
+
+                            // モデル表示
+                            if (currentVisibleMarker === wbfMarker) {
+                                // とりあえずHappyを表示（すぐにAPIデータ更新があれば上書きされる）
+                                happyModel.setAttribute('visible', true);
+                            } else if (currentTargetModel) {
+                                currentTargetModel.setAttribute('visible', true);
+                            }
+
+                            // パーティクル発火
+                            if (currentParticles) {
+                                currentParticles.setAttribute('particle-system', 'enabled', true);
+                                setTimeout(() => {
+                                    currentParticles.setAttribute('particle-system', 'enabled', false);
+                                }, 2000);
+                            }
+                        }
                     });
 
                     // --- API設定 ---
@@ -160,43 +285,24 @@
                         if (!API_ENDPOINT) return;
 
                         try {
-                            // API Gatewayからデータを取得
                             const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}`);
                             const data = await response.json();
 
-                            // 新しいデータの場合のみ処理
                             if (data.timestamp && data.timestamp > lastProcessedTimestamp) {
                                 lastProcessedTimestamp = data.timestamp;
-                                console.log('新しいデータ:', data);
 
-                                // has_changeがfalseの場合は無視（手ブレなど）
-                                if (data.has_change === false) {
-                                    console.log('変化なしのためスキップ');
-                                    return;
-                                }
+                                if (data.has_change === false) return;
 
-                                // 判定結果(is_valid)に基づくモデル切り替え
-                                // true -> happy (OK), false -> angry (NG)
                                 if (typeof data.is_valid !== 'undefined') {
                                     if (data.is_valid) {
                                         showModel('happy');
                                     } else {
                                         showModel('angry');
                                     }
-                                }
-                                // 後方互換性: emotionフィールドがある場合
-                                else if (data.emotion) {
-                                    switch (data.emotion) {
-                                        case 'happy':
-                                            showModel('happy');
-                                            break;
-                                        case 'angry':
-                                            showModel('angry');
-                                            break;
-                                    }
+                                } else if (data.emotion) {
+                                    showModel(data.emotion);
                                 }
 
-                                // メッセージの更新
                                 if (data.message) {
                                     const messageBox = document.getElementById('message-box');
                                     if (messageBox) {
@@ -219,18 +325,13 @@
         });
 
         // ==========================================
-        // 3. 音声処理の初期化 (24kHz)
+        // 音声処理関数群
         // ==========================================
         async function initAudio() {
-            // OpenAI Realtime APIに合わせて 24kHz でコンテキストを作成
             audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-
-            // マイク入力のセットアップ
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const source = audioContext.createMediaStreamSource(stream);
-
-                // PCM16変換用プロセッサ
                 const processor = audioContext.createScriptProcessor(4096, 1, 1);
 
                 source.connect(processor);
@@ -238,14 +339,9 @@
 
                 processor.onaudioprocess = (e) => {
                     if (!socket || socket.readyState !== WebSocket.OPEN) return;
-
                     const inputData = e.inputBuffer.getChannelData(0);
-                    // Float32 -> Int16 (PCM) 変換
                     const pcmData = floatTo16BitPCM(inputData);
-                    // Base64変換
                     const base64Audio = arrayBufferToBase64(pcmData);
-
-                    // サーバーへ送信
                     socket.send(JSON.stringify({
                         type: "input_audio_buffer.append",
                         audio: base64Audio
@@ -257,9 +353,6 @@
             }
         }
 
-        // ==========================================
-        // 4. WebSocket接続
-        // ==========================================
         function connectWebSocket() {
             const url = `${SERVER_URL}?role=ar&token=${TOKEN}`;
             socket = new WebSocket(url);
@@ -271,8 +364,6 @@
 
             socket.onmessage = async (event) => {
                 const data = JSON.parse(event.data);
-
-                // 音声データ受信 (response.audio.delta)
                 if (data.type === "response.audio.delta") {
                     playAudio(data.delta);
                 }
@@ -283,9 +374,6 @@
             };
         }
 
-        // ==========================================
-        // 5. 音声再生 (Base64 -> Audio)
-        // ==========================================
         function playAudio(base64Data) {
             const binaryString = atob(base64Data);
             const len = binaryString.length;
@@ -296,16 +384,13 @@
             const int16Data = new Int16Array(bytes.buffer);
             const floatData = new Float32Array(int16Data.length);
 
-            // Int16 -> Float32 変換
             for (let i = 0; i < int16Data.length; i++) {
                 floatData[i] = int16Data[i] / 32768.0;
             }
 
-            // バッファ作成
             const buffer = audioContext.createBuffer(1, floatData.length, 24000);
             buffer.getChannelData(0).set(floatData);
 
-            // 再生キューイング（途切れないように時間を管理）
             const source = audioContext.createBufferSource();
             source.buffer = buffer;
             source.connect(audioContext.destination);
@@ -318,7 +403,6 @@
             nextStartTime += buffer.duration;
         }
 
-        // ユーティリティ: Float32 -> Int16
         function floatTo16BitPCM(input) {
             const output = new Int16Array(input.length);
             for (let i = 0; i < input.length; i++) {
@@ -328,7 +412,6 @@
             return output.buffer;
         }
 
-        // ユーティリティ: ArrayBuffer -> Base64
         function arrayBufferToBase64(buffer) {
             let binary = '';
             const bytes = new Uint8Array(buffer);
@@ -344,6 +427,7 @@
 <body style="margin: 0; overflow: hidden;">
     <!-- UIボタン -->
     <button id="connect-btn" class="ui-button">🎤 音声接続開始</button>
+    <button id="summon-btn" class="ui-button">✨ 召喚！ ✨</button>
     <div id="status">未接続</div>
 
     <button id="happy-btn" class="ui-button">😊 喜び</button>
@@ -359,6 +443,7 @@
         <a-assets>
             <a-asset-item id="happy-asset" src="Animation_Happy_Sway_Standing_withSkin.glb"></a-asset-item>
             <a-asset-item id="angry-asset" src="Animation_Angry_To_Tantrum_Sit_withSkin.glb"></a-asset-item>
+            <a-asset-item id="buddy-asset" src="Recycle_Buddy_1203165406_texture.glb"></a-asset-item>
         </a-assets>
 
         <!-- Custom Marker -->
@@ -366,16 +451,22 @@
 
             <a-entity id="model-container">
                 <!-- Happy Model (Default Visible) -->
-                <a-gltf-model id="happy-model" src="#happy-asset" position="0 0 0" rotation="0 0 0" scale="1 1 1"
+                <a-gltf-model id="happy-model" src="#happy-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
                     animation-mixer visible="true">
                 </a-gltf-model>
 
                 <!-- Angry Model (Hidden) -->
-                <a-gltf-model id="angry-model" src="#angry-asset" position="0 0 0" rotation="0 0 0" scale="1 1 1"
+                <a-gltf-model id="angry-model" src="#angry-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
                     animation-mixer visible="false">
                 </a-gltf-model>
             </a-entity>
 
+        </a-marker>
+
+        <!-- Hiro Marker -->
+        <a-marker preset="hiro">
+            <a-gltf-model src="#buddy-asset" position="0 0 0" rotation="0 0 0" scale="1.5 1.5 1.5" animation-mixer>
+            </a-gltf-model>
         </a-marker>
 
         <a-entity camera></a-entity>
