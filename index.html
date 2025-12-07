@@ -204,6 +204,11 @@
                             iconElement.className = 'emotion-icon';
                             iconElement.textContent = icon;
 
+                            // ハートの場合はピンク色に
+                            if (emotion === 'happy') {
+                                iconElement.style.color = '#FF69B4'; // ホットピンク
+                            }
+
                             // ランダムな位置に配置
                             iconElement.style.left = `${Math.random() * 80 + 10}%`;
                             iconElement.style.top = `${Math.random() * 70 + 15}%`;
