@@ -7,7 +7,7 @@
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.2.0/dist/aframe-extras.min.js"></script>
-    <script src="aframe-particle-system-component.min.js"></script>
+    <!-- Particle system removed due to compatibility issues -->
     <style>
         .ui-button {
             position: absolute;
@@ -210,35 +210,19 @@
                         showModel('angry');
                     });
 
-                    // --- パーティクルシステム追加関数 ---
-                    function addParticleSystem(markerElement) {
-                        const particleEntity = document.createElement('a-entity');
-                        particleEntity.setAttribute('position', '0 0 0');
-                        particleEntity.setAttribute('particle-system', {
-                            preset: 'star',
-                            color: '#FFD700,#FFFFFF',
-                            particleCount: 200,
-                            size: 0.5,
-                            maxAge: 2,
-                            duration: 1,
-                            enabled: false
-                        });
-                        markerElement.appendChild(particleEntity);
-                        return particleEntity;
+                    // --- シンプルなエフェクト関数 ---
+                    function showEffect(markerElement) {
+                        console.log('✨ Effect triggered!');
+                        // 簡易的なログ出力のみ（パーティクルは互換性問題のため削除）
                     }
-
-                    const wbfParticles = addParticleSystem(wbfMarker);
-                    const hiroParticles = addParticleSystem(hiroMarker);
 
                     let currentVisibleMarker = null;
                     let currentTargetModel = null;
-                    let currentParticles = null;
 
                     // --- マーカー検出時の処理 ---
-                    function handleMarkerFound(marker, model, particles) {
+                    function handleMarkerFound(marker, model) {
                         currentVisibleMarker = marker;
                         currentTargetModel = model;
-                        currentParticles = particles;
 
                         if (!isSummoned) {
                             // 召喚前：ボタンを表示、モデルを隠す
@@ -275,12 +259,12 @@
 
                     // イベントリスナー登録
                     wbfMarker.addEventListener('markerFound', () => {
-                        handleMarkerFound(wbfMarker, null, wbfParticles);
+                        handleMarkerFound(wbfMarker, null);
                     });
                     wbfMarker.addEventListener('markerLost', handleMarkerLost);
 
                     hiroMarker.addEventListener('markerFound', () => {
-                        handleMarkerFound(hiroMarker, buddyModel, hiroParticles);
+                        handleMarkerFound(hiroMarker, buddyModel);
                     });
                     hiroMarker.addEventListener('markerLost', handleMarkerLost);
 
@@ -296,14 +280,6 @@
                             } else if (currentTargetModel) {
                                 // Hiroマーカーの場合も非表示
                                 currentTargetModel.setAttribute('visible', false);
-                            }
-
-                            // パーティクル発火
-                            if (currentParticles) {
-                                currentParticles.setAttribute('particle-system', 'enabled', true);
-                                setTimeout(() => {
-                                    currentParticles.setAttribute('particle-system', 'enabled', false);
-                                }, 2000);
                             }
 
                             console.log('召喚完了。Joyful（待機状態）を表示。データベースの更新を待機中...');
