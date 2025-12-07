@@ -92,6 +92,42 @@
             text-align: center;
             border-top: 2px solid rgba(255, 255, 255, 0.3);
         }
+
+        /* Emotion Icon Overlay */
+        .emotion-icon-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1500;
+            display: none;
+        }
+
+        .emotion-icon {
+            position: absolute;
+            font-size: 40px;
+            animation: float 3s ease-in-out;
+            opacity: 0;
+        }
+
+        @keyframes float {
+            0% {
+                opacity: 0;
+                transform: translateY(0) scale(0.5);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translateY(-20px) scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-40px) scale(0.8);
+            }
+        }
     </style>
     <script>
         // --- 状態管理用変数 ---
@@ -147,9 +183,46 @@
                         allModels.forEach(model => {
                             if (model) model.setAttribute('visible', false);
                         });
-                        // 怒りアイコンとハートアイコンも非表示
+                        // AR空間のアイコンを非表示（削除予定）
                         if (angerIcon) angerIcon.setAttribute('visible', false);
                         if (heartIcon) heartIcon.setAttribute('visible', false);
+                        // 画面固定のアイコンを非表示
+                        hideEmotionIcons();
+                    }
+
+                    // --- 画面固定の感情アイコンを表示 ---
+                    function showEmotionIcons(emotion) {
+                        const overlay = document.getElementById('emotion-overlay');
+                        overlay.style.display = 'block';
+                        overlay.innerHTML = ''; // クリア
+
+                        const icon = emotion === 'happy' ? '❤' : '💢';
+                        const iconCount = 8; // アイコンの数
+
+                        for (let i = 0; i < iconCount; i++) {
+                            const iconElement = document.createElement('div');
+                            iconElement.className = 'emotion-icon';
+                            iconElement.textContent = icon;
+
+                            // ランダムな位置に配置
+                            iconElement.style.left = `${Math.random() * 80 + 10}%`;
+                            iconElement.style.top = `${Math.random() * 70 + 15}%`;
+                            iconElement.style.animationDelay = `${Math.random() * 0.5}s`;
+
+                            overlay.appendChild(iconElement);
+                        }
+
+                        // 3秒後に非表示
+                        setTimeout(() => {
+                            hideEmotionIcons();
+                        }, 3000);
+                    }
+
+                    // --- 画面固定の感情アイコンを非表示 ---
+                    function hideEmotionIcons() {
+                        const overlay = document.getElementById('emotion-overlay');
+                        overlay.style.display = 'none';
+                        overlay.innerHTML = '';
                     }
 
                     // --- Joyful（待機状態）を表示 ---
@@ -179,8 +252,8 @@
                             const randomHappy = Math.random() < 0.5 ? happy1Model : happy2Model;
                             randomHappy.setAttribute('visible', true);
 
-                            // ハートアイコンを表示
-                            if (heartIcon) heartIcon.setAttribute('visible', true);
+                            // 画面固定のハートアイコンを表示
+                            showEmotionIcons('happy');
 
                             console.log(`Showing Happy Model: ${randomHappy.id}`);
 
@@ -557,6 +630,9 @@
     <div id="message-box">
         ゴミを捨ててね！
     </div>
+
+    <!-- Emotion Icon Overlay -->
+    <div id="emotion-overlay" class="emotion-icon-overlay"></div>
 
     <a-scene embedded arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'>
 
