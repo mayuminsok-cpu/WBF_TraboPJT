@@ -131,7 +131,7 @@
     </style>
     <script>
         // --- 状態管理用変数 ---
-        let lastProcessedTimestamp = 0;
+        let lastProcessedTimestamp = "";
 
         // --- 音声AI統合用変数 ---
         const SERVER_URL = "wss://chase-unpatient-denice.ngrok-free.dev/ws";
@@ -418,6 +418,7 @@
 
                             // デバッグログ
                             console.log('Fetched Data:', data);
+                            console.log('Timestamp check:', data.timestamp, lastProcessedTimestamp);
 
                             if (data.timestamp && data.timestamp > lastProcessedTimestamp) {
                                 console.log(`New data detected! Timestamp: ${data.timestamp} > ${lastProcessedTimestamp}`);
