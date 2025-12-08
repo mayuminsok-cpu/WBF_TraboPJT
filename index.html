@@ -414,8 +414,15 @@
 
                         try {
                             // キャッシュ回避のためにタイムスタンプ付与
+                            // キャッシュ回避
                             const timestamp = new Date().getTime();
-                            const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}&_t=${timestamp}`);
+                            const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}&_t=${timestamp}`, {
+                                cache: "no-store",
+                                headers: {
+                                    'Cache-Control': 'no-cache',
+                                    'Pragma': 'no-cache'
+                                }
+                            });
                             const data = await response.json();
 
                             // デバッグログ
@@ -463,7 +470,15 @@
 
                         try {
                             // 最新2件を取得
-                            const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}&limit=2`);
+                            // 最新2件を取得（キャッシュ回避）
+                            const timestamp = new Date().getTime();
+                            const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}&limit=2&_t=${timestamp}`, {
+                                cache: "no-store",
+                                headers: {
+                                    'Cache-Control': 'no-cache',
+                                    'Pragma': 'no-cache'
+                                }
+                            });
                             const data = await response.json();
 
                             // レスポンスが配列か、Itemsを持つか、単一オブジェクトかを確認
