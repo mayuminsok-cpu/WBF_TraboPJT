@@ -413,7 +413,9 @@
                         if (!API_ENDPOINT) return;
 
                         try {
-                            const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}`);
+                            // キャッシュ回避のためにタイムスタンプ付与
+                            const timestamp = new Date().getTime();
+                            const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}&_t=${timestamp}`);
                             const data = await response.json();
 
                             // デバッグログ
