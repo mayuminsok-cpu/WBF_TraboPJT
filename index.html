@@ -494,9 +494,13 @@
                                 records = [data];
                             }
 
+                            console.log('Consecutive Check Records:', records);
+
                             if (records.length >= 2) {
                                 const latest = records[0];
                                 const previous = records[1];
+                                console.log('Latest:', latest.is_valid, latest.timestamp);
+                                console.log('Previous:', previous.is_valid, previous.timestamp);
 
                                 // 両方ともis_valid=trueかチェック
                                 if (latest.is_valid === true && previous.is_valid === true) {
