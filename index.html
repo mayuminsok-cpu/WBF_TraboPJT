@@ -543,13 +543,7 @@
                             messageBox.innerText = 'すごい！2回連続成功や！リサイクルバディ登場！';
                         }
 
-                        // お祝いエフェクト
-                        if (wbfParticles) {
-                            wbfParticles.setAttribute('particle-system', 'enabled', true);
-                            setTimeout(() => {
-                                wbfParticles.setAttribute('particle-system', 'enabled', false);
-                            }, 3000);
-                        }
+
 
                         console.log('モデルチェンジ完了: Recycle Buddy表示');
                     }
