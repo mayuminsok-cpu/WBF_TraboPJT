@@ -454,8 +454,15 @@
                             const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}&limit=2`);
                             const data = await response.json();
 
-                            // レスポンスがItemsを持つか、単一オブジェクトかを確認
-                            const records = data.Items || [data];
+                            // レスポンスが配列か、Itemsを持つか、単一オブジェクトかを確認
+                            let records = [];
+                            if (Array.isArray(data)) {
+                                records = data;
+                            } else if (data.Items) {
+                                records = data.Items;
+                            } else {
+                                records = [data];
+                            }
 
                             if (records.length >= 2) {
                                 const latest = records[0];
