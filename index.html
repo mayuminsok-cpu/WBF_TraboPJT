@@ -416,10 +416,19 @@
                             const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}`);
                             const data = await response.json();
 
+                            // デバッグログ
+                            console.log('Fetched Data:', data);
+
                             if (data.timestamp && data.timestamp > lastProcessedTimestamp) {
+                                console.log(`New data detected! Timestamp: ${data.timestamp} > ${lastProcessedTimestamp}`);
                                 lastProcessedTimestamp = data.timestamp;
 
-                                if (data.has_change === false) return;
+                                if (data.has_change === false) {
+                                    console.log('has_change is false, ignoring.');
+                                    return;
+                                }
+
+                                console.log(`Processing emotion. is_valid: ${data.is_valid}`);
 
                                 if (typeof data.is_valid !== 'undefined') {
                                     if (data.is_valid) {
