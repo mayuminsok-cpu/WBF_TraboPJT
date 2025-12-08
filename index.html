@@ -342,6 +342,9 @@
                         summonBtn.style.display = 'none';
                         // isSummonedはリセットしない（一度召喚したら次回も表示）
 
+                        // エモーション状態をリセット（再検出時は待機状態に戻す）
+                        currentEmotion = null;
+
                         // 全モデル非表示
                         hideAllModels();
                         if (currentTargetModel) currentTargetModel.setAttribute('visible', false);
