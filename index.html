@@ -520,8 +520,7 @@
                         hasChangedToRecycleBuddy = true;
 
                         // Happy/Angryモデルを非表示
-                        happyModel.setAttribute('visible', false);
-                        angryModel.setAttribute('visible', false);
+                        hideAllModels();
 
                         // WBFマーカー上にRecycle Buddyを作成
                         recycleBuddyModel = document.createElement('a-gltf-model');
