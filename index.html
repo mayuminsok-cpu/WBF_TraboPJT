@@ -685,7 +685,19 @@
                 this.el.addEventListener('model-loaded', (e) => {
                     const model = this.el.getObject3D('mesh');
                     if (model && model.animations && model.animations.length > 0) {
-                        console.log(`[Model Logger] Animations for ${this.el.id}:`, model.animations.map(a => a.name));
+                        const animationNames = model.animations.map(a => a.name);
+                        console.log(`[Model Logger] Animations for ${this.el.id}: ${JSON.stringify(animationNames)}`);
+
+                        // Auto-Fix: Apply the first animation explicitly
+                        const firstClip = animationNames[0];
+                        const isLoop = this.el.id.includes('joyful');
+                        const settings = `clip: ${firstClip}; loop: ${isLoop ? 'repeat' : 'once'}; clampWhenFinished: true`;
+
+                        this.el.setAttribute('animation-mixer', settings);
+                        console.log(`[Auto-Fix] Applied settings to ${this.el.id}: ${settings}`);
+
+                        // Force play
+                        // this.el.components['animation-mixer'].play();
                     } else {
                         console.warn(`[Model Logger] No animations found for ${this.el.id}`);
                     }
