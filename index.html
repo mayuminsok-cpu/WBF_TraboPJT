@@ -178,8 +178,10 @@
                     let currentEmotion = null; // 現在のエモーション
                     let currentEmotion = null; // 現在のエモーション
                     let emotionTimeout = null; // エモーション終了後のタイムアウト
+                    let emotionTimeout = null; // エモーション終了後のタイムアウト
                     let summonTimestamp = 0; // 召喚時刻 (Session Start)
                     let lastProcessedTimestamp = 0; // The timestamp of the last processed record
+                    let isFirstPoll = false; // Flag to sync timestamp on first poll
 
 
 
@@ -416,13 +418,10 @@
                                 currentTargetModel.setAttribute('visible', false);
                             }
 
-                            // 過去のデータを無視するために、タイムスタンプを現在時刻に更新
-                            // Note: DB returns ISO string usually, but we need to match the format.
-                            // However, simply setting it to a very new 'string' that compares > old strings works if ISO.
-                            // Better to just set it to current ISO string.
-                            lastProcessedTimestamp = new Date().toISOString();
-                            summonTimestamp = lastProcessedTimestamp; // Sync session start
-                            console.log(`Summoned! Ignoring data older than: ${lastProcessedTimestamp}`);
+                            // 過去のデータを無視するために、フラグを立てる
+                            // 最初のAPI取得時に、その時点のサーバー最新時刻をベースラインとして取得する
+                            isFirstPoll = true;
+                            console.log('Summoned! Waiting for first poll to sync timestamp...');
 
                             console.log('召喚完了。Joyful（待機状態）を表示。データベースの更新を待機中...');
                         }
@@ -475,6 +474,24 @@
 
                             // デバッグログ
                             console.log('Fetched Data:', data);
+
+                            // 初回ポール時の同期処理
+                            if (isFirstPoll) {
+                                if (data.timestamp) {
+                                    lastProcessedTimestamp = data.timestamp;
+                                    summonTimestamp = data.timestamp; // Session baseline
+                                    console.log('Synced valid baseline timestamp from server:', lastProcessedTimestamp);
+                                } else {
+                                    // データがない場合は現在時刻(ISO)を入れておく（念のため）
+                                    // ただしサーバー時計とのズレリスクはあるが、データ空なら次は確実に来るのでOK
+                                    lastProcessedTimestamp = new Date().toISOString();
+                                    summonTimestamp = lastProcessedTimestamp;
+                                    console.log('No data on server, set baseline to local time:', lastProcessedTimestamp);
+                                }
+                                isFirstPoll = false;
+                                return; // 初回は同期のみで終了（反応しない）
+                            }
+
                             console.log('Timestamp check:', data.timestamp, lastProcessedTimestamp);
 
                             if (data.timestamp && data.timestamp > lastProcessedTimestamp) {
