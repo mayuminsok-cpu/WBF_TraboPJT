@@ -633,7 +633,7 @@
 
                             // Animations
                             particle.setAttribute('animation__move', `property: position; to: ${dirX} ${dirY} ${dirZ}; dur: 2500; easing: easeOutExpo`);
-                            particle.setAttribute('animation__fade', 'property: material.opacity; from: 1; to: 0; dur: 2500; easing: easeInQuad`);
+                            particle.setAttribute('animation__fade', 'property: material.opacity; from: 1; to: 0; dur: 2500; easing: easeInQuad');
                             particle.setAttribute('animation__spin', `property: rotation; to: ${Math.random() * 720} ${Math.random() * 720} 0; dur: 2500`);
 
                             parent.appendChild(particle);
