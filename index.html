@@ -362,16 +362,20 @@
                         currentParticles = null;
                     }
 
-                    // イベントリスナー登録
-                    wbfMarker.addEventListener('markerFound', () => {
-                        handleMarkerFound(wbfMarker, null);
-                    });
-                    wbfMarker.addEventListener('markerLost', handleMarkerLost);
+                    // イベントリスナー登録 (マーカーがある場合のみ)
+                    if (wbfMarker) {
+                        wbfMarker.addEventListener('markerFound', () => {
+                            handleMarkerFound(wbfMarker, null);
+                        });
+                        wbfMarker.addEventListener('markerLost', handleMarkerLost);
+                    }
 
-                    hiroMarker.addEventListener('markerFound', () => {
-                        handleMarkerFound(hiroMarker, buddyModel);
-                    });
-                    hiroMarker.addEventListener('markerLost', handleMarkerLost);
+                    if (hiroMarker) {
+                        hiroMarker.addEventListener('markerFound', () => {
+                            handleMarkerFound(hiroMarker, buddyModel);
+                        });
+                        hiroMarker.addEventListener('markerLost', handleMarkerLost);
+                    }
 
                     // --- 召喚ボタンクリックイベント ---
                     summonBtn.addEventListener('click', () => {
