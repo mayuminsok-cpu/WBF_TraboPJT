@@ -234,6 +234,7 @@
 
                     // --- Joyful（待機状態）を表示 ---
                     function showJoyful() {
+                        if (!isSummoned) return;
                         if (hasChangedToRecycleBuddy) return;
                         hideAllModels();
                         joyfulModel.setAttribute('visible', true);
@@ -242,6 +243,7 @@
 
                     // --- モデル切り替え関数（ランダム選択） ---
                     function showModel(emotion) {
+                        if (!isSummoned) return;
                         // モデルチェンジ済みの場合は何もしない
                         if (hasChangedToRecycleBuddy) return;
 
@@ -518,6 +520,7 @@
 
                     // --- モデルチェンジ関数 ---
                     function triggerModelChange() {
+                        if (!isSummoned) return;
                         if (hasChangedToRecycleBuddy) return;
 
                         hasChangedToRecycleBuddy = true;
@@ -545,6 +548,9 @@
                         if (messageBox) {
                             messageBox.innerText = 'すごい！2回連続成功や！リサイクルバディ登場！';
                         }
+
+                        // お祝いエフェクト（アイコン）
+                        showEmotionIcons('celebrate');
 
 
 
