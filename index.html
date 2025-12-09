@@ -183,7 +183,11 @@
                     // --- 全モデルを非表示にする関数 ---
                     function hideAllModels() {
                         allModels.forEach(model => {
-                            if (model) model.setAttribute('visible', false);
+                            if (model) {
+                                model.setAttribute('visible', false);
+                                // Performance: Pause the entity to stop animation/tick loop
+                                model.pause();
+                            }
                         });
                         // AR空間のアイコンを非表示（削除予定）
                         if (angerIcon) angerIcon.setAttribute('visible', false);
@@ -239,7 +243,9 @@
                         if (!isSummoned) return;
                         if (hasChangedToRecycleBuddy) return;
                         hideAllModels();
+                        hideAllModels();
                         joyfulModel.setAttribute('visible', true);
+                        joyfulModel.play(); // Check: Resume
                         console.log("Showing Joyful (Idle) Model");
                     }
 
@@ -271,6 +277,7 @@
                             else randomHappy = happy3Model;
 
                             randomHappy.setAttribute('visible', true);
+                            randomHappy.play(); // Check: Resume
 
                             // 画面固定のハートアイコンを表示
                             showEmotionIcons('happy');
@@ -285,6 +292,7 @@
                         } else if (emotion === 'angry') {
                             // Angryは1つ
                             angryModel.setAttribute('visible', true);
+                            angryModel.play(); // Check: Resume
 
                             // 画面固定の怒りアイコンを表示
                             showEmotionIcons('angry');
@@ -549,6 +557,7 @@
                         recycleBuddyModel.setAttribute('scale', '1.5 1.5 1.5');
                         recycleBuddyModel.setAttribute('animation-mixer', 'loop: once');
                         recycleBuddyModel.setAttribute('visible', true);
+                        recycleBuddyModel.play(); // Check: Resume
 
                         // WBFマーカーのmodel-containerに追加
                         const modelContainer = document.getElementById('model-container');
@@ -570,8 +579,8 @@
                         console.log('モデルチェンジ完了: Recycle Buddy表示');
                     }
 
-                    // 1秒ごとにチェック
-                    setInterval(checkEmotionData, 1000);
+                    // 2秒ごとにチェック (Performance: Reduced from 1s)
+                    setInterval(checkEmotionData, 2000);
                     console.log('データの監視を開始しました');
                 });
             } else {
@@ -728,7 +737,10 @@
     <!-- Emotion Icon Overlay -->
     <div id="emotion-overlay" class="emotion-icon-overlay"></div>
 
-    <a-scene embedded arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'>
+    <a-scene embedded
+        arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'
+        renderer="antialias: false; precision: medium; logarithmicDepthBuffer: true; colorManagement: true;"
+        vr-mode-ui="enabled: false">
 
         <a-assets>
             <!-- Happy animations (3 variants) -->
