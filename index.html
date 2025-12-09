@@ -176,7 +176,10 @@
                     let hasChangedToRecycleBuddy = false; // モデルチェンジ済みフラグ
                     let recycleBuddyModel = null; // WBFマーカー上のRecycle Buddyモデル
                     let currentEmotion = null; // 現在のエモーション
+                    let currentEmotion = null; // 現在のエモーション
                     let emotionTimeout = null; // エモーション終了後のタイムアウト
+                    let summonTimestamp = 0; // 召喚時刻 (Session Start)
+                    let lastProcessedTimestamp = 0; // The timestamp of the last processed record
 
 
 
@@ -413,6 +416,13 @@
                                 currentTargetModel.setAttribute('visible', false);
                             }
 
+                            // 過去のデータを無視するために、タイムスタンプを現在時刻に更新
+                            // Note: DB returns ISO string usually, but we need to match the format.
+                            // However, simply setting it to a very new 'string' that compares > old strings works if ISO.
+                            // Better to just set it to current ISO string.
+                            lastProcessedTimestamp = new Date().toISOString();
+                            console.log(`Summoned! Ignoring data older than: ${lastProcessedTimestamp}`);
+
                             console.log('召喚完了。Joyful（待機状態）を表示。データベースの更新を待機中...');
                         }
                     });
@@ -537,9 +547,17 @@
                                 console.log('Previous:', previous.is_valid, previous.timestamp);
 
                                 // 両方ともis_valid=trueかチェック
+                                // かつ、両方とも召喚後に発生したイベントであることをチェック（セッション内連続成功）
+                                const isLatestNew = latest.timestamp > summonTimestamp;
+                                const isPreviousNew = previous.timestamp > summonTimestamp;
+
                                 if (latest.is_valid === true && previous.is_valid === true) {
-                                    console.log('連続成功検出！モデルチェンジを実行');
-                                    triggerModelChange();
+                                    if (isLatestNew && isPreviousNew) {
+                                        console.log('連続成功検出 (セッション内)！モデルチェンジを実行');
+                                        triggerModelChange();
+                                    } else {
+                                        console.log('連続成功ですが、セッション前のデータが含まれるため無視します:', previous.timestamp);
+                                    }
                                 }
                             }
                         } catch (error) {
