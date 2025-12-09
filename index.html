@@ -788,22 +788,27 @@
             <a-entity id="model-container">
                 <!-- Joyful (Idle/Waiting State) -->
                 <a-gltf-model id="joyful-model" src="#joyful-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
-                    visible="false" model-logger>
+                    animation-mixer="clip: Armature|Idle_4|baselayer; loop: repeat; timeScale: 1" visible="false"
+                    model-logger>
                 </a-gltf-model>
 
                 <!-- Happy Models (3 variants) -->
                 <a-gltf-model id="happy-1-model" src="#happy-1-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
+                    animation-mixer="clip: Armature|Happy_Sway_Standing|baselayer; loop: repeat; timeScale: 1"
                     visible="false" model-logger>
                 </a-gltf-model>
                 <a-gltf-model id="happy-2-model" src="#happy-2-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
+                    animation-mixer="clip: Armature|Joyful_Dance_with_Hand_Sway|baselayer; loop: repeat; timeScale: 1"
                     visible="false" model-logger>
                 </a-gltf-model>
                 <a-gltf-model id="happy-3-model" src="#happy-3-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
+                    animation-mixer="clip: Armature|Excited_Walk_F|baselayer; loop: repeat; timeScale: 1"
                     visible="false" model-logger>
                 </a-gltf-model>
 
                 <!-- Angry Models (1 variant) -->
                 <a-gltf-model id="angry-model" src="#angry-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
+                    animation-mixer="clip: Armature|Angry_Ground_Stomp_2|baselayer; loop: repeat; timeScale: 1"
                     visible="false" model-logger>
                 </a-gltf-model>
 
