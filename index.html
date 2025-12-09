@@ -680,6 +680,8 @@
         // --- Debug Component: Log Animations ---
         AFRAME.registerComponent('model-logger', {
             init: function () {
+                console.log(`[Model Logger] Initialized for ${this.el.id}`);
+
                 this.el.addEventListener('model-loaded', (e) => {
                     const model = this.el.getObject3D('mesh');
                     if (model && model.animations && model.animations.length > 0) {
@@ -687,6 +689,10 @@
                     } else {
                         console.warn(`[Model Logger] No animations found for ${this.el.id}`);
                     }
+                });
+
+                this.el.addEventListener('model-error', (e) => {
+                    console.error(`[Model Logger] Error loading model ${this.el.id}:`, e.detail);
                 });
             }
         });
@@ -715,20 +721,21 @@
         <a-assets>
             <!-- Happy animations (3 variants) -->
             <a-asset-item id="happy-1-asset"
-                src="chibi_remake_Animation_Happy_Sway_Standing_withSkin_1.glb"></a-asset-item>
+                src="chibi_remake_Animation_Happy_Sway_Standing_withSkin_1.glb?v=1"></a-asset-item>
             <a-asset-item id="happy-2-asset"
-                src="chibi_remake_Animation_Joyful_Dance_with_Hand_Sway_withSkin.glb"></a-asset-item>
-            <a-asset-item id="happy-3-asset" src="chibi_remake_Animation_Excited_Walk_F_withSkin.glb"></a-asset-item>
+                src="chibi_remake_Animation_Joyful_Dance_with_Hand_Sway_withSkin.glb?v=1"></a-asset-item>
+            <a-asset-item id="happy-3-asset"
+                src="chibi_remake_Animation_Excited_Walk_F_withSkin.glb?v=1"></a-asset-item>
 
             <!-- Angry animations (1 variant) -->
             <a-asset-item id="angry-asset"
-                src="chibi_remake_Animation_Angry_Ground_Stomp_2_withSkin_1.glb"></a-asset-item>
+                src="chibi_remake_Animation_Angry_Ground_Stomp_2_withSkin_1.glb?v=1"></a-asset-item>
 
             <!-- Joyful (idle/waiting state) -->
-            <a-asset-item id="joyful-asset" src="chibi_remake_Animation_Idle_4_withSkin.glb"></a-asset-item>
+            <a-asset-item id="joyful-asset" src="chibi_remake_Animation_Idle_4_withSkin.glb?v=1"></a-asset-item>
 
             <!-- Recycle Buddy -->
-            <a-asset-item id="buddy-asset" src="Recycle_Buddy_1203165406_texture.glb"></a-asset-item>
+            <a-asset-item id="buddy-asset" src="Recycle_Buddy_1203165406_texture.glb?v=1"></a-asset-item>
         </a-assets>
 
         <!-- Custom Marker -->
