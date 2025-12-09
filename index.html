@@ -702,10 +702,20 @@
             <a-asset-item id="buddy-asset" src="Recycle_Buddy_1203165406_texture.glb"></a-asset-item>
         </a-assets>
 
-        <!-- Custom Marker -->
-        <a-marker type='pattern' url='pattern-WBF.patt?v=3'>
+        <!-- Custom Marker (Disabled for test) -->
+        <!-- <a-marker type='pattern' url='pattern-WBF.patt?v=3'> -->
 
-            <a-entity id="model-container">
+        <!-- </a-marker> -->
+
+        <!-- Hiro Marker -->
+        <!-- <a-marker preset="hiro">
+            <a-gltf-model src="#buddy-asset" position="0 0 0" rotation="0 0 0" scale="1.5 1.5 1.5"
+                animation-mixer="loop: once">
+            </a-gltf-model>
+        </a-marker> -->
+
+        <a-entity camera>
+            <a-entity id="model-container" position="0 -1.5 -4" rotation="0 0 0">
                 <!-- Joyful (Idle/Waiting State) -->
                 <a-gltf-model id="joyful-model" src="#joyful-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
                     animation-mixer="loop: repeat" visible="false">
@@ -737,17 +747,7 @@
                     align="center" visible="false">
                 </a-text>
             </a-entity>
-
-        </a-marker>
-
-        <!-- Hiro Marker -->
-        <a-marker preset="hiro">
-            <a-gltf-model src="#buddy-asset" position="0 0 0" rotation="0 0 0" scale="1.5 1.5 1.5"
-                animation-mixer="loop: once">
-            </a-gltf-model>
-        </a-marker>
-
-        <a-entity camera></a-entity>
+        </a-entity>
 
     </a-scene>
 </body>
