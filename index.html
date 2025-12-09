@@ -617,59 +617,69 @@
                     }
 
                     // --- モデルチェンジ関数 ---
+                    // --- モデルチェンジ関数 ---
                     function triggerModelChange() {
                         if (!isSummoned) return;
                         if (hasChangedToRecycleBuddy) return;
 
                         hasChangedToRecycleBuddy = true;
 
-                        // Happy/Angryモデルを非表示
-                        // Happy/Angryモデルを非表示
-                        hideAllModels();
+                        // 1. Happyエモーションを少し見せるために遅延させる (2.5秒待機)
+                        setTimeout(() => {
+                            // WBFマーカーのmodel-containerを取得
+                            const modelContainer = document.getElementById('model-container');
 
-                        // WBFマーカーのmodel-containerを取得
-                        const modelContainer = document.getElementById('model-container');
+                            // 2. フラッシュエフェクト開始
+                            if (modelContainer) {
+                                createFlashEffect(modelContainer);
+                            }
 
-                        // フラッシュエフェクト実行
-                        if (modelContainer) {
-                            createFlashEffect(modelContainer);
-                        }
+                            // 3. フラッシュで画面が白くなったタイミングでモデルを切り替える (さらに0.5秒後)
+                            setTimeout(() => {
+                                // Happy/Angryモデルを非表示
+                                hideAllModels();
 
-                        // WBFマーカー上にRecycle Buddyを作成
-                        recycleBuddyModel = document.createElement('a-gltf-model');
-                        recycleBuddyModel.setAttribute('src', '#buddy-asset');
-                        recycleBuddyModel.setAttribute('position', '0 0 0');
-                        recycleBuddyModel.setAttribute('rotation', '0 0 0');
-                        recycleBuddyModel.setAttribute('scale', '3 3 3');
-                        recycleBuddyModel.setAttribute('animation-mixer', 'loop: repeat');
-                        recycleBuddyModel.setAttribute('visible', true);
+                                // WBFマーカー上にRecycle Buddyを作成
+                                recycleBuddyModel = document.createElement('a-gltf-model');
+                                recycleBuddyModel.setAttribute('src', '#buddy-asset');
+                                recycleBuddyModel.setAttribute('position', '0 0 0');
+                                recycleBuddyModel.setAttribute('rotation', '0 0 0');
+                                recycleBuddyModel.setAttribute('scale', '3 3 3');
+                                recycleBuddyModel.setAttribute('animation-mixer', 'loop: repeat');
+                                recycleBuddyModel.setAttribute('visible', true);
 
-                        // WBFマーカーのmodel-containerに追加
-                        if (modelContainer) {
-                            modelContainer.appendChild(recycleBuddyModel);
-                        }
+                                // WBFマーカーのmodel-containerに追加
+                                if (modelContainer) {
+                                    modelContainer.appendChild(recycleBuddyModel);
+                                }
 
-                        // メッセージ更新
-                        const messageBox = document.getElementById('message-box');
-                        if (messageBox) {
-                            messageBox.innerText = 'すごい！2回連続成功や！リサイクルバディ登場！';
-                        }
+                                // メッセージ更新
+                                const messageBox = document.getElementById('message-box');
+                                if (messageBox) {
+                                    messageBox.innerText = 'すごい！2回連続成功や！リサイクルバディ登場！';
+                                }
 
-                        // お祝いエフェクト（アイコン）
-                        showEmotionIcons('celebrate');
+                                // お祝いエフェクト（アイコン）
+                                showEmotionIcons('celebrate');
 
+                                console.log('モデルチェンジ完了: Recycle Buddy表示');
 
+                            }, 500); // フラッシュ開始から0.5秒後にモデル切り替え
 
-                        console.log('モデルチェンジ完了: Recycle Buddy表示');
+                        }, 2500); // Happyアニメーションを2.5秒見せる
                     }
+
+
+                    console.log('モデルチェンジ完了: Recycle Buddy表示');
+                }
 
                     // 2秒ごとにチェック (Performance: Reduced from 1s)
                     setInterval(checkEmotionData, 2000);
-                    console.log('データの監視を開始しました');
-                });
+                console.log('データの監視を開始しました');
+            });
             } else {
-                console.error("a-scene not found!");
-            }
+            console.error("a-scene not found!");
+        }
         });
 
         // ==========================================
