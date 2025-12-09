@@ -245,9 +245,13 @@
 
                     // --- モデル切り替え関数（ランダム選択） ---
                     function showModel(emotion) {
+                        console.log(`showModel called with: ${emotion}. isSummoned: ${isSummoned}, hasChangedToRecycleBuddy: ${hasChangedToRecycleBuddy}`);
                         if (!isSummoned) return;
                         // モデルチェンジ済みの場合は何もしない
-                        if (hasChangedToRecycleBuddy) return;
+                        if (hasChangedToRecycleBuddy) {
+                            console.log('Skipping showModel because Recycle Buddy is active.');
+                            return;
+                        }
 
                         // 既存のタイムアウトをクリア
                         if (emotionTimeout) {
@@ -452,7 +456,7 @@
                                     return;
                                 }
 
-                                console.log(`Processing emotion. is_valid: ${data.is_valid}`);
+                                console.log(`Processing emotion. is_valid: ${data.is_valid}, isSummoned: ${isSummoned}`);
 
                                 if (typeof data.is_valid !== 'undefined') {
                                     if (data.is_valid) {
