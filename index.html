@@ -596,6 +596,26 @@
                         }
                     }
 
+                    // --- 進化演出エフェクト (Flash) ---
+                    function createFlashEffect(parent) {
+                        const flash = document.createElement('a-entity');
+                        flash.setAttribute('geometry', 'primitive: sphere; radius: 0.5');
+                        flash.setAttribute('material', 'color: #FFFFFF; shader: flat; transparent: true; opacity: 0.8');
+                        flash.setAttribute('position', '0 1 0'); // Center
+                        flash.setAttribute('scale', '0.1 0.1 0.1');
+
+                        // Scale up and fade out animation
+                        flash.setAttribute('animation__scale', 'property: scale; to: 5 5 5; dur: 800; easing: easeOutQuad');
+                        flash.setAttribute('animation__fade', 'property: material.opacity; from: 0.8; to: 0; dur: 800; easing: easeOutQuad');
+
+                        parent.appendChild(flash);
+
+                        // Remove after animation
+                        setTimeout(() => {
+                            if (flash.parentNode) flash.parentNode.removeChild(flash);
+                        }, 1000);
+                    }
+
                     // --- モデルチェンジ関数 ---
                     function triggerModelChange() {
                         if (!isSummoned) return;
@@ -604,7 +624,16 @@
                         hasChangedToRecycleBuddy = true;
 
                         // Happy/Angryモデルを非表示
+                        // Happy/Angryモデルを非表示
                         hideAllModels();
+
+                        // WBFマーカーのmodel-containerを取得
+                        const modelContainer = document.getElementById('model-container');
+
+                        // フラッシュエフェクト実行
+                        if (modelContainer) {
+                            createFlashEffect(modelContainer);
+                        }
 
                         // WBFマーカー上にRecycle Buddyを作成
                         recycleBuddyModel = document.createElement('a-gltf-model');
