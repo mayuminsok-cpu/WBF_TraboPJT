@@ -178,6 +178,9 @@
                     let currentEmotion = null; // 現在のエモーション
                     let emotionTimeout = null; // エモーション終了後のタイムアウト
 
+                    // Markerless Mode: Show Summon button immediately
+                    if (summonBtn) summonBtn.style.display = 'block';
+
                     // --- 全モデルを非表示にする関数 ---
                     function hideAllModels() {
                         allModels.forEach(model => {
@@ -372,20 +375,11 @@
 
                     // --- 召喚ボタンクリックイベント ---
                     summonBtn.addEventListener('click', () => {
-                        if (currentVisibleMarker) {
-                            summonBtn.style.display = 'none';
-                            isSummoned = true; // フラグON
-
-                            // Joyful（待機状態）を表示
-                            if (currentVisibleMarker === wbfMarker) {
-                                showJoyful();
-                            } else if (currentTargetModel) {
-                                // Hiroマーカーの場合も非表示
-                                currentTargetModel.setAttribute('visible', false);
-                            }
-
-                            console.log('召喚完了。Joyful（待機状態）を表示。データベースの更新を待機中...');
-                        }
+                        // Markerless Mode: Always allow summoning
+                        summonBtn.style.display = 'none';
+                        isSummoned = true; // フラグON
+                        showJoyful();
+                        console.log('Makerless Mode: 召喚完了。Joyful（待機状態）を表示。データベースの更新を待機中...');
                     });
 
                     // --- API設定 ---
