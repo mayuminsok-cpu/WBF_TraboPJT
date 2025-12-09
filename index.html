@@ -243,6 +243,11 @@
                         hideAllModels();
                         hideAllModels();
                         joyfulModel.setAttribute('visible', true);
+                        joyfulModel.setAttribute('scale', '3 3 3'); // Force scale
+                        // Force Animation
+                        if (joyfulModel.components['animation-mixer']) {
+                            joyfulModel.components['animation-mixer'].play();
+                        }
                         console.log("Showing Joyful (Idle) Model");
                     }
 
@@ -288,6 +293,10 @@
                         } else if (emotion === 'angry') {
                             // Angryは1つ
                             angryModel.setAttribute('visible', true);
+                            angryModel.setAttribute('scale', '3 3 3'); // Force scale
+                            if (angryModel.components['animation-mixer']) {
+                                angryModel.components['animation-mixer'].play();
+                            }
 
                             // 画面固定の怒りアイコンを表示
                             showEmotionIcons('angry');
