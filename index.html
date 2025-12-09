@@ -605,7 +605,7 @@
                         flash.setAttribute('scale', '0.1 0.1 0.1');
 
                         // Scale up and fade out animation
-                        flash.setAttribute('animation__scale', 'property: scale; to: 5 5 5; dur: 3000; easing: easeOutQuad');
+                        flash.setAttribute('animation__scale', 'property: scale; to: 15 15 15; dur: 3000; easing: easeOutQuad');
                         flash.setAttribute('animation__fade', 'property: material.opacity; from: 1.0; to: 0; dur: 3000; easing: easeOutQuad');
 
                         parent.appendChild(flash);
@@ -627,9 +627,9 @@
                             particle.setAttribute('position', '0 1 0');
 
                             // Random direction
-                            const dirX = (Math.random() - 0.5) * 4;
-                            const dirY = (Math.random() - 0.5) * 4 + 1;
-                            const dirZ = (Math.random() - 0.5) * 4;
+                            const dirX = (Math.random() - 0.5) * 12;
+                            const dirY = (Math.random() - 0.5) * 12 + 1;
+                            const dirZ = (Math.random() - 0.5) * 12;
 
                             // Animations
                             particle.setAttribute('animation__move', `property: position; to: ${dirX} ${dirY} ${dirZ}; dur: 2500; easing: easeOutExpo`);
