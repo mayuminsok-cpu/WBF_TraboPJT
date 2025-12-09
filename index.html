@@ -701,14 +701,14 @@
         <a-assets>
             <!-- Happy animations (3 variants) -->
             <a-asset-item id="happy-1-asset"
-                src="chibi_remake_Animation_Happy_Sway_Standing_withSkin (1).glb"></a-asset-item>
+                src="chibi_remake_Animation_Happy_Sway_Standing_withSkin_1.glb"></a-asset-item>
             <a-asset-item id="happy-2-asset"
                 src="chibi_remake_Animation_Joyful_Dance_with_Hand_Sway_withSkin.glb"></a-asset-item>
             <a-asset-item id="happy-3-asset" src="chibi_remake_Animation_Excited_Walk_F_withSkin.glb"></a-asset-item>
 
             <!-- Angry animations (1 variant) -->
             <a-asset-item id="angry-asset"
-                src="chibi_remake_Animation_Angry_Ground_Stomp_2_withSkin (1).glb"></a-asset-item>
+                src="chibi_remake_Animation_Angry_Ground_Stomp_2_withSkin_1.glb"></a-asset-item>
 
             <!-- Joyful (idle/waiting state) -->
             <a-asset-item id="joyful-asset" src="chibi_remake_Animation_Idle_4_withSkin.glb"></a-asset-item>
@@ -723,23 +723,23 @@
             <a-entity id="model-container">
                 <!-- Joyful (Idle/Waiting State) -->
                 <a-gltf-model id="joyful-model" src="#joyful-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
-                    animation-mixer="loop: repeat" visible="false">
+                    animation-mixer="clip: *; loop: repeat" visible="false">
                 </a-gltf-model>
 
                 <!-- Happy Models (3 variants) -->
                 <a-gltf-model id="happy-1-model" src="#happy-1-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
-                    animation-mixer="loop: once" visible="false">
+                    animation-mixer="clip: *; loop: once" visible="false">
                 </a-gltf-model>
                 <a-gltf-model id="happy-2-model" src="#happy-2-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
-                    animation-mixer="loop: once" visible="false">
+                    animation-mixer="clip: *; loop: once" visible="false">
                 </a-gltf-model>
                 <a-gltf-model id="happy-3-model" src="#happy-3-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
-                    animation-mixer="loop: once" visible="false">
+                    animation-mixer="clip: *; loop: once" visible="false">
                 </a-gltf-model>
 
                 <!-- Angry Models (1 variant) -->
                 <a-gltf-model id="angry-model" src="#angry-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
-                    animation-mixer="loop: once" visible="false">
+                    animation-mixer="clip: *; loop: once" visible="false">
                 </a-gltf-model>
 
                 <!-- Anger Icon (💢) -->
