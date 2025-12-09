@@ -157,13 +157,13 @@
                     const joyfulModel = document.querySelector('#joyful-model');
                     const happy1Model = document.querySelector('#happy-1-model');
                     const happy2Model = document.querySelector('#happy-2-model');
-                    const angry1Model = document.querySelector('#angry-1-model');
-                    const angry2Model = document.querySelector('#angry-2-model');
+                    const happy3Model = document.querySelector('#happy-3-model');
+                    const angryModel = document.querySelector('#angry-model');
                     const angerIcon = document.querySelector('#anger-icon');
                     const heartIcon = document.querySelector('#heart-icon');
 
                     // 全モデルの配列
-                    const allModels = [joyfulModel, happy1Model, happy2Model, angry1Model, angry2Model];
+                    const allModels = [joyfulModel, happy1Model, happy2Model, happy3Model, angryModel];
 
                     // --- 召喚ロジック変数 ---
                     const summonBtn = document.getElementById('summon-btn');
@@ -263,8 +263,13 @@
                         currentEmotion = emotion;
 
                         if (emotion === 'happy') {
-                            // ランダムでHappy1またはHappy2を選択
-                            const randomHappy = Math.random() < 0.5 ? happy1Model : happy2Model;
+                            // ランダムでHappy1, 2, 3を選択
+                            const rand = Math.random();
+                            let randomHappy;
+                            if (rand < 0.33) randomHappy = happy1Model;
+                            else if (rand < 0.66) randomHappy = happy2Model;
+                            else randomHappy = happy3Model;
+
                             randomHappy.setAttribute('visible', true);
 
                             // 画面固定のハートアイコンを表示
@@ -278,15 +283,13 @@
                             }, 3000); // 3秒後（アニメーション時間に応じて調整）
 
                         } else if (emotion === 'angry') {
-                            // ランダムでAngry1またはAngry2を選択
-                            const randomAngry = Math.random() < 0.5 ? angry1Model : angry2Model;
-                            randomAngry.setAttribute('visible', true);
-
+                            // Angryは1つ
+                            angryModel.setAttribute('visible', true);
 
                             // 画面固定の怒りアイコンを表示
                             showEmotionIcons('angry');
 
-                            console.log(`Showing Angry Model: ${randomAngry.id}`);
+                            console.log(`Showing Angry Model: ${angryModel.id}`);
 
                             // アニメーション終了後にJoyfulに戻る（アイコンも非表示）
                             emotionTimeout = setTimeout(() => {
@@ -696,17 +699,19 @@
     <a-scene embedded arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'>
 
         <a-assets>
-            <!-- Happy animations (2 variants) -->
-            <a-asset-item id="happy-1-asset" src="chibi_Animation_Happy_Sway_Standing_withSkin.glb"></a-asset-item>
-            <a-asset-item id="happy-2-asset" src="chibi_Animation_Happy_turn_F_withSkin.glb"></a-asset-item>
+            <!-- Happy animations (3 variants) -->
+            <a-asset-item id="happy-1-asset"
+                src="chibi_remake_Animation_Happy_Sway_Standing_withSkin (1).glb"></a-asset-item>
+            <a-asset-item id="happy-2-asset"
+                src="chibi_remake_Animation_Joyful_Dance_with_Hand_Sway_withSkin.glb"></a-asset-item>
+            <a-asset-item id="happy-3-asset" src="chibi_remake_Animation_Excited_Walk_F_withSkin.glb"></a-asset-item>
 
-            <!-- Angry animations (2 variants) -->
-            <a-asset-item id="angry-1-asset" src="chibi_Animation_Angry_Ground_Stomp_2_withSkin.glb"></a-asset-item>
-            <a-asset-item id="angry-2-asset" src="chibi_Animation_angry_Fist_Pump_withSkin.glb"></a-asset-item>
+            <!-- Angry animations (1 variant) -->
+            <a-asset-item id="angry-asset"
+                src="chibi_remake_Animation_Angry_Ground_Stomp_2_withSkin (1).glb"></a-asset-item>
 
             <!-- Joyful (idle/waiting state) -->
-            <a-asset-item id="joyful-asset"
-                src="chibi_Animation_Joyful_Dance_with_Hand_Sway_withSkin.glb"></a-asset-item>
+            <a-asset-item id="joyful-asset" src="chibi_remake_Animation_Idle_4_withSkin.glb"></a-asset-item>
 
             <!-- Recycle Buddy -->
             <a-asset-item id="buddy-asset" src="Recycle_Buddy_1203165406_texture.glb"></a-asset-item>
@@ -721,19 +726,19 @@
                     animation-mixer="loop: repeat" visible="false">
                 </a-gltf-model>
 
-                <!-- Happy Models (2 variants) -->
+                <!-- Happy Models (3 variants) -->
                 <a-gltf-model id="happy-1-model" src="#happy-1-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
                     animation-mixer="loop: once" visible="false">
                 </a-gltf-model>
                 <a-gltf-model id="happy-2-model" src="#happy-2-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
                     animation-mixer="loop: once" visible="false">
                 </a-gltf-model>
-
-                <!-- Angry Models (2 variants) -->
-                <a-gltf-model id="angry-1-model" src="#angry-1-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
+                <a-gltf-model id="happy-3-model" src="#happy-3-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
                     animation-mixer="loop: once" visible="false">
                 </a-gltf-model>
-                <a-gltf-model id="angry-2-model" src="#angry-2-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
+
+                <!-- Angry Models (1 variant) -->
+                <a-gltf-model id="angry-model" src="#angry-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
                     animation-mixer="loop: once" visible="false">
                 </a-gltf-model>
 
