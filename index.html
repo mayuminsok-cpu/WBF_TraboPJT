@@ -670,16 +670,14 @@
                     }
 
 
-                    console.log('モデルチェンジ完了: Recycle Buddy表示');
-                }
 
                     // 2秒ごとにチェック (Performance: Reduced from 1s)
                     setInterval(checkEmotionData, 2000);
-                console.log('データの監視を開始しました');
-            });
+                    console.log('データの監視を開始しました');
+                });
             } else {
-            console.error("a-scene not found!");
-        }
+                console.error("a-scene not found!");
+            }
         });
 
         // ==========================================
