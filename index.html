@@ -691,16 +691,23 @@
                         const animationNames = model.animations.map(a => a.name);
                         console.log(`[Model Logger] Animations for ${this.el.id}: ${JSON.stringify(animationNames)}`);
 
-                        // Auto-Fix: Apply the first animation explicitly
                         const firstClip = animationNames[0];
-                        // Debug: Force repeat for ALL to verify movement
-                        const settings = `clip: ${firstClip}; loop: repeat; timeScale: 1`;
+                        // Reset component by removing it first
+                        this.el.removeAttribute('animation-mixer');
 
-                        this.el.setAttribute('animation-mixer', settings);
-                        console.log(`[Auto-Fix] Applied DEBUG settings to ${this.el.id}: ${settings}`);
+                        // Re-add with a slight delay to force re-initialization
+                        setTimeout(() => {
+                            const settings = `clip: ${firstClip}; loop: repeat; crossFadeDuration: 0`;
+                            this.el.setAttribute('animation-mixer', settings);
+                            console.log(`[Auto-Fix] Enforced settings on ${this.el.id}: ${settings}`);
 
-                        // Force play
-                        // this.el.components['animation-mixer'].play();
+                            // Check component and play
+                            const mixer = this.el.components['animation-mixer'];
+                            if (mixer) {
+                                mixer.play();
+                                console.log(`[Auto-Fix] Called .play() on ${this.el.id}`);
+                            }
+                        }, 100);
                     } else {
                         console.warn(`[Model Logger] No animations found for ${this.el.id}`);
                     }
