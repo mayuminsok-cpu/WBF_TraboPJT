@@ -693,11 +693,11 @@
 
                         // Auto-Fix: Apply the first animation explicitly
                         const firstClip = animationNames[0];
-                        const isLoop = this.el.id.includes('joyful');
-                        const settings = `clip: ${firstClip}; loop: ${isLoop ? 'repeat' : 'once'}; clampWhenFinished: true`;
+                        // Debug: Force repeat for ALL to verify movement
+                        const settings = `clip: ${firstClip}; loop: repeat; timeScale: 1`;
 
                         this.el.setAttribute('animation-mixer', settings);
-                        console.log(`[Auto-Fix] Applied settings to ${this.el.id}: ${settings}`);
+                        console.log(`[Auto-Fix] Applied DEBUG settings to ${this.el.id}: ${settings}`);
 
                         // Force play
                         // this.el.components['animation-mixer'].play();
@@ -735,6 +735,12 @@
         arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'
         renderer="antialias: false; precision: medium; logarithmicDepthBuffer: true; colorManagement: true;"
         vr-mode-ui="enabled: false">
+
+        <!-- Debug: Spinning Box to verify Render Loop -->
+        <a-entity position="0 0 -2"> <!-- Camera fixed position (ish) -->
+            <a-box position="-1.5 1.5 -3" rotation="0 45 0" color="#4CC3D9" scale="0.2 0.2 0.2"
+                animation="property: rotation; to: 0 405 0; loop: true; dur: 2000"></a-box>
+        </a-entity>
 
         <a-assets>
             <!-- Happy animations (3 variants) -->
