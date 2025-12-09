@@ -178,8 +178,7 @@
                     let currentEmotion = null; // 現在のエモーション
                     let emotionTimeout = null; // エモーション終了後のタイムアウト
 
-                    // Markerless Mode: Show Summon button immediately
-                    if (summonBtn) summonBtn.style.display = 'block';
+
 
                     // --- 全モデルを非表示にする関数 ---
                     function hideAllModels() {
@@ -379,11 +378,20 @@
 
                     // --- 召喚ボタンクリックイベント ---
                     summonBtn.addEventListener('click', () => {
-                        // Markerless Mode: Always allow summoning
-                        summonBtn.style.display = 'none';
-                        isSummoned = true; // フラグON
-                        showJoyful();
-                        console.log('Makerless Mode: 召喚完了。Joyful（待機状態）を表示。データベースの更新を待機中...');
+                        if (currentVisibleMarker) {
+                            summonBtn.style.display = 'none';
+                            isSummoned = true; // フラグON
+
+                            // Joyful（待機状態）を表示
+                            if (currentVisibleMarker === wbfMarker) {
+                                showJoyful();
+                            } else if (currentTargetModel) {
+                                // Hiroマーカーの場合も非表示
+                                currentTargetModel.setAttribute('visible', false);
+                            }
+
+                            console.log('召喚完了。Joyful（待機状態）を表示。データベースの更新を待機中...');
+                        }
                     });
 
                     // --- API設定 ---
@@ -700,20 +708,10 @@
             <a-asset-item id="buddy-asset" src="Recycle_Buddy_1203165406_texture.glb"></a-asset-item>
         </a-assets>
 
-        <!-- Custom Marker (Disabled for test) -->
-        <!-- <a-marker type='pattern' url='pattern-WBF.patt?v=3'> -->
+        <!-- Custom Marker -->
+        <a-marker type='pattern' url='pattern-WBF.patt?v=3'>
 
-        <!-- </a-marker> -->
-
-        <!-- Hiro Marker -->
-        <!-- <a-marker preset="hiro">
-            <a-gltf-model src="#buddy-asset" position="0 0 0" rotation="0 0 0" scale="1.5 1.5 1.5"
-                animation-mixer="loop: once">
-            </a-gltf-model>
-        </a-marker> -->
-
-        <a-entity camera>
-            <a-entity id="model-container" position="0 -1.5 -4" rotation="0 0 0">
+            <a-entity id="model-container">
                 <!-- Joyful (Idle/Waiting State) -->
                 <a-gltf-model id="joyful-model" src="#joyful-asset" position="0 0 0" rotation="0 0 0" scale="3 3 3"
                     animation-mixer="loop: repeat" visible="false">
@@ -745,7 +743,17 @@
                     align="center" visible="false">
                 </a-text>
             </a-entity>
-        </a-entity>
+
+        </a-marker>
+
+        <!-- Hiro Marker -->
+        <a-marker preset="hiro">
+            <a-gltf-model src="#buddy-asset" position="0 0 0" rotation="0 0 0" scale="1.5 1.5 1.5"
+                animation-mixer="loop: once">
+            </a-gltf-model>
+        </a-marker>
+
+        <a-entity camera></a-entity>
 
     </a-scene>
 </body>
