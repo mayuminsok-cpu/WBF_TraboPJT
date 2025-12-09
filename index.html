@@ -697,7 +697,7 @@
 
                         // Re-add with a slight delay to force re-initialization
                         setTimeout(() => {
-                            const settings = `clip: ${firstClip}; loop: repeat; crossFadeDuration: 0`;
+                            const settings = `clip: ${firstClip}; loop: repeat; crossFadeDuration: 0; timeScale: 1; clampWhenFinished: false`;
                             this.el.setAttribute('animation-mixer', settings);
                             console.log(`[Auto-Fix] Enforced settings on ${this.el.id}: ${settings}`);
 
