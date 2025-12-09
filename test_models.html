@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Model Test</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.2.0/dist/aframe-extras.min.js"></script>
+    <script>
+        AFRAME.registerComponent('model-test-logger', {
+            init: function () {
+                console.log('Model Test Logger Initialized');
+                this.el.addEventListener('model-loaded', (e) => {
+                    const model = this.el.getObject3D('mesh');
+                    console.log('Model Loaded:', model);
+                    if (model.animations && model.animations.length > 0) {
+                        const clipName = model.animations[0].name;
+                        console.log('Found Animation:', clipName);
+                        // Force Play
+                        this.el.setAttribute('animation-mixer', `clip: *; loop: repeat; timeScale: 1`);
+                        console.log('Applied animation-mixer: clip: *');
+                    } else {
+                        console.warn('No animations found in file!');
+                    }
+                });
+                this.el.addEventListener('model-error', (e) => {
+                    console.error('Model Error:', e.detail);
+                });
+            }
+        });
+    </script>
+</head>
+
+<body style="margin: 0; overflow: hidden;">
+    <div style="position: fixed; top: 10px; left: 10px; background: white; padding: 10px; z-index: 999;">
+        <h2>Model Test</h2>
+        <p>If the character moves, the model is OK.</p>
+        <p>If static, the model file or A-Frame version is the issue.</p>
+    </div>
+    <a-scene background="color: #ECECEC" renderer="antialias: true">
+        <a-assets>
+            <a-asset-item id="test-model" src="chibi_remake_Animation_Idle_4_withSkin.glb?v=TEST"></a-asset-item>
+        </a-assets>
+
+        <a-entity position="0 0 -2">
+            <a-gltf-model src="#test-model" scale="3 3 3" model-test-logger>
+            </a-gltf-model>
+        </a-entity>
+
+        <a-entity position="0 1.6 3" camera look-controls></a-entity>
+
+        <a-light type="ambient" color="#ffffff"></a-light>
+        <a-light type="directional" position="-1 1 1" intensity="0.5"></a-light>
+    </a-scene>
+</body>
+
+</html>
