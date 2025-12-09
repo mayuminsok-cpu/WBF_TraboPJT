@@ -196,7 +196,7 @@
                         overlay.style.display = 'block';
                         overlay.innerHTML = ''; // クリア
 
-                        const icon = emotion === 'happy' ? '❤' : '💢';
+                        const icon = emotion === 'happy' ? '❤' : (emotion === 'celebrate' ? '🎉' : '💢');
                         const iconCount = 8; // アイコンの数
 
                         for (let i = 0; i < iconCount; i++) {
@@ -204,9 +204,11 @@
                             iconElement.className = 'emotion-icon';
                             iconElement.textContent = icon;
 
-                            // ハートの場合はピンク色に
+                            // ハートの場合はピンク色に、祝いの場合は金色に
                             if (emotion === 'happy') {
                                 iconElement.style.color = '#FF69B4'; // ホットピンク
+                            } else if (emotion === 'celebrate') {
+                                iconElement.style.color = '#FFD700'; // ゴールド
                             }
 
                             // ランダムな位置に配置
@@ -413,6 +415,7 @@
 
                     // --- DBから感情データを取得する関数 ---
                     async function checkEmotionData() {
+                        if (!isSummoned) return; // 召喚前は何もしない
                         if (!API_ENDPOINT) return;
 
                         try {
