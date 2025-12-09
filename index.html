@@ -279,6 +279,10 @@
                             else randomHappy = happy3Model;
 
                             randomHappy.setAttribute('visible', true);
+                            randomHappy.setAttribute('scale', '3 3 3'); // Force scale
+                            if (randomHappy.components['animation-mixer']) {
+                                randomHappy.components['animation-mixer'].play();
+                            }
 
                             // 画面固定のハートアイコンを表示
                             showEmotionIcons('happy');
