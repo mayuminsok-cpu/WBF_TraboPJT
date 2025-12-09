@@ -616,6 +616,35 @@
                         }, 3100);
                     }
 
+                    // --- キラキラエフェクト (Sparkle) ---
+                    function createSparkleEffect(parent) {
+                        const particleCount = 30;
+                        for (let i = 0; i < particleCount; i++) {
+                            const particle = document.createElement('a-entity');
+                            // Simple geometry for sparkles
+                            particle.setAttribute('geometry', 'primitive: box; width: 0.05; height: 0.05; depth: 0.05');
+                            particle.setAttribute('material', 'color: #FFFF00; shader: flat; transparent: true; opacity: 1; blending: additive');
+                            particle.setAttribute('position', '0 1 0');
+
+                            // Random direction
+                            const dirX = (Math.random() - 0.5) * 4;
+                            const dirY = (Math.random() - 0.5) * 4 + 1;
+                            const dirZ = (Math.random() - 0.5) * 4;
+
+                            // Animations
+                            particle.setAttribute('animation__move', `property: position; to: ${dirX} ${dirY} ${dirZ}; dur: 2500; easing: easeOutExpo`);
+                            particle.setAttribute('animation__fade', 'property: material.opacity; from: 1; to: 0; dur: 2500; easing: easeInQuad`);
+                            particle.setAttribute('animation__spin', `property: rotation; to: ${Math.random() * 720} ${Math.random() * 720} 0; dur: 2500`);
+
+                            parent.appendChild(particle);
+
+                            // Cleanup
+                            setTimeout(() => {
+                                if (particle.parentNode) particle.parentNode.removeChild(particle);
+                            }, 2600);
+                        }
+                    }
+
                     // --- モデルチェンジ関数 ---
                     // --- モデルチェンジ関数 ---
                     function triggerModelChange() {
@@ -629,9 +658,10 @@
                             // WBFマーカーのmodel-containerを取得
                             const modelContainer = document.getElementById('model-container');
 
-                            // 2. フラッシュエフェクト開始
+                            // 2. フラッシュ & キラキラエフェクト開始
                             if (modelContainer) {
                                 createFlashEffect(modelContainer);
+                                createSparkleEffect(modelContainer);
                             }
 
                             // 3. フラッシュで画面が白くなったタイミングでモデルを切り替える (さらに0.5秒後)
