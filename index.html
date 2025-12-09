@@ -421,6 +421,7 @@
                             // However, simply setting it to a very new 'string' that compares > old strings works if ISO.
                             // Better to just set it to current ISO string.
                             lastProcessedTimestamp = new Date().toISOString();
+                            summonTimestamp = lastProcessedTimestamp; // Sync session start
                             console.log(`Summoned! Ignoring data older than: ${lastProcessedTimestamp}`);
 
                             console.log('召喚完了。Joyful（待機状態）を表示。データベースの更新を待機中...');
