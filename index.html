@@ -251,8 +251,21 @@
                         if (joyfulModel.components['animation-mixer']) {
                             joyfulModel.components['animation-mixer'].play();
                         }
-                        console.log("Showing Joyful (Idle) Model");
                     }
+
+                    // --- 赤色ティント適用関数 ---
+                    function applyRedTint(modelElement) {
+                        const mesh = modelElement.getObject3D('mesh');
+                        if (!mesh) return;
+                        mesh.traverse((node) => {
+                            if (node.isMesh) {
+                                // 元のマテリアルカラーを保存（必要なら）
+                                // ここではシンプルに赤くする
+                                node.material.color.setHex(0xFF5555); // Slightly bright red
+                            }
+                        });
+                    } console.log("Showing Joyful (Idle) Model");
+                }
 
                     // --- モデル切り替え関数（ランダム選択） ---
                     function showModel(emotion) {
@@ -304,6 +317,8 @@
                             if (angryModel.components['animation-mixer']) {
                                 angryModel.components['animation-mixer'].play();
                             }
+                            // 赤くする
+                            applyRedTint(angryModel);
 
                             // 画面固定の怒りアイコンを表示
                             showEmotionIcons('angry');
@@ -327,306 +342,306 @@
                         showModel('happy');
                     });
 
-                    // 怒り表現（手動ボタン）
-                    document.getElementById('angry-btn').addEventListener('click', function () {
-                        // 召喚されていなければ自動召喚
-                        if (!isSummoned) {
-                            isSummoned = true;
-                            summonBtn.style.display = 'none';
-                        }
-                        showModel('angry');
-                    });
-
-                    // --- シンプルなエフェクト関数 ---
-                    function showEffect(markerElement) {
-                        console.log('✨ Effect triggered!');
-                        // 簡易的なログ出力のみ（パーティクルは互換性問題のため削除）
-                    }
-
-                    let currentVisibleMarker = null;
-                    let currentTargetModel = null;
-
-                    // --- マーカー検出時の処理 ---
-                    function handleMarkerFound(marker, model) {
-                        currentVisibleMarker = marker;
-                        currentTargetModel = model;
-
-                        if (!isSummoned) {
-                            // 召喚前：ボタンを表示、モデルを隠す
-                            summonBtn.style.display = 'block';
-                            hideAllModels();
-                        } else {
-                            // 既に召喚済みなら、Joyfulまたは現在のエモーションを表示
-                            if (marker === wbfMarker) {
-                                if (currentEmotion) {
-                                    showModel(currentEmotion);
-                                } else {
-                                    showJoyful();
-                                }
-                            } else if (currentTargetModel) {
-                                currentTargetModel.setAttribute('visible', true);
-                            }
-                        }
-                    }
-
-                    // --- マーカーロスト時の処理 ---
-                    function handleMarkerLost() {
+                // 怒り表現（手動ボタン）
+                document.getElementById('angry-btn').addEventListener('click', function () {
+                    // 召喚されていなければ自動召喚
+                    if (!isSummoned) {
+                        isSummoned = true;
                         summonBtn.style.display = 'none';
-                        // isSummonedはリセットしない（一度召喚したら次回も表示）
-
-                        // エモーション状態をリセット（再検出時は待機状態に戻す）
-                        currentEmotion = null;
-
-                        // 全モデル非表示
-                        hideAllModels();
-                        if (currentTargetModel) currentTargetModel.setAttribute('visible', false);
-                        if (buddyModel) buddyModel.setAttribute('visible', false);
-
-                        currentVisibleMarker = null;
-                        currentTargetModel = null;
-                        currentParticles = null;
                     }
-
-                    // イベントリスナー登録 (マーカーがある場合のみ)
-                    if (wbfMarker) {
-                        wbfMarker.addEventListener('markerFound', () => {
-                            handleMarkerFound(wbfMarker, null);
-                        });
-                        wbfMarker.addEventListener('markerLost', handleMarkerLost);
-                    }
-
-                    if (hiroMarker) {
-                        hiroMarker.addEventListener('markerFound', () => {
-                            handleMarkerFound(hiroMarker, buddyModel);
-                        });
-                        hiroMarker.addEventListener('markerLost', handleMarkerLost);
-                    }
-
-                    // --- 召喚ボタンクリックイベント ---
-                    summonBtn.addEventListener('click', () => {
-                        if (currentVisibleMarker) {
-                            summonBtn.style.display = 'none';
-                            isSummoned = true; // フラグON
-
-                            // Joyful（待機状態）を表示
-                            if (currentVisibleMarker === wbfMarker) {
-                                showJoyful();
-                            } else if (currentTargetModel) {
-                                // Hiroマーカーの場合も非表示
-                                currentTargetModel.setAttribute('visible', false);
-                            }
-
-                            // 過去のデータを無視するために、フラグを立てる
-                            // 最初のAPI取得時に、その時点のサーバー最新時刻をベースラインとして取得する
-                            isFirstPoll = true;
-                            console.log('Summoned! Waiting for first poll to sync timestamp...');
-
-                            console.log('召喚完了。Joyful（待機状態）を表示。データベースの更新を待機中...');
-                        }
-                    });
-
-                    // --- API設定 ---
-                    let API_ENDPOINT = '';
-                    const USER_ID = 'webapp_user';
-
-                    // 設定を読み込む
-                    async function loadConfig() {
-                        try {
-                            const response = await fetch('./amplify_outputs.json');
-                            const config = await response.json();
-                            if (config.custom && config.custom.API) {
-                                const apiName = Object.keys(config.custom.API)[0];
-                                API_ENDPOINT = config.custom.API[apiName].endpoint;
-                                // 末尾のスラッシュを削除
-                                if (API_ENDPOINT.endsWith('/')) {
-                                    API_ENDPOINT = API_ENDPOINT.slice(0, -1);
-                                }
-                                console.log('API Endpoint loaded:', API_ENDPOINT);
-                            } else {
-                                console.warn('API configuration not found in amplify_outputs.json');
-                            }
-                        } catch (error) {
-                            console.error('設定ファイルの読み込みエラー:', error);
-                        }
-                    }
-
-                    loadConfig();
-
-                    // --- DBから感情データを取得する関数 ---
-                    async function checkEmotionData() {
-                        if (!isSummoned) return; // 召喚前は何もしない
-                        if (!API_ENDPOINT) return;
-
-                        try {
-                            // キャッシュ回避のためにタイムスタンプ付与
-                            // キャッシュ回避
-                            const timestamp = new Date().getTime();
-                            const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}&_t=${timestamp}`, {
-                                cache: "no-store",
-                                headers: {
-                                    'Cache-Control': 'no-cache',
-                                    'Pragma': 'no-cache'
-                                }
-                            });
-                            const data = await response.json();
-
-                            // デバッグログ
-                            console.log('Fetched Data:', data);
-
-                            // 初回ポール時の同期処理
-                            if (isFirstPoll) {
-                                if (data.timestamp) {
-                                    lastProcessedTimestamp = data.timestamp;
-                                    summonTimestamp = data.timestamp; // Session baseline
-                                    console.log('Synced valid baseline timestamp from server:', lastProcessedTimestamp);
-                                } else {
-                                    // データがない場合は現在時刻(ISO)を入れておく（念のため）
-                                    // ただしサーバー時計とのズレリスクはあるが、データ空なら次は確実に来るのでOK
-                                    lastProcessedTimestamp = new Date().toISOString();
-                                    summonTimestamp = lastProcessedTimestamp;
-                                    console.log('No data on server, set baseline to local time:', lastProcessedTimestamp);
-                                }
-                                isFirstPoll = false;
-                                return; // 初回は同期のみで終了（反応しない）
-                            }
-
-                            console.log('Timestamp check:', data.timestamp, lastProcessedTimestamp);
-
-                            if (data.timestamp && data.timestamp > lastProcessedTimestamp) {
-                                console.log(`New data detected! Timestamp: ${data.timestamp} > ${lastProcessedTimestamp}`);
-                                lastProcessedTimestamp = data.timestamp;
-
-                                if (data.has_change === false) {
-                                    console.log('has_change is false, ignoring.');
-                                    return;
-                                }
-
-                                console.log(`Processing emotion. is_valid: ${data.is_valid}, isSummoned: ${isSummoned}`);
-
-                                if (typeof data.is_valid !== 'undefined') {
-                                    if (data.is_valid) {
-                                        showModel('happy');
-                                        // 連続成功チェック
-                                        await checkConsecutiveSuccess(data.timestamp);
-                                    } else {
-                                        showModel('angry');
-                                    }
-                                } else if (data.emotion) {
-                                    showModel(data.emotion);
-                                }
-
-                                if (data.message) {
-                                    const messageBox = document.getElementById('message-box');
-                                    if (messageBox) {
-                                        messageBox.innerText = data.message;
-                                    }
-                                }
-                            }
-                        } catch (error) {
-                            console.error('データの取得エラー:', error);
-                        }
-                    }
-
-                    // --- 連続成功チェック関数 ---
-                    async function checkConsecutiveSuccess(currentTimestamp) {
-                        if (hasChangedToRecycleBuddy) return; // 既にモデルチェンジ済み
-
-                        try {
-                            // 最新2件を取得
-                            // 最新2件を取得（キャッシュ回避）
-                            const timestamp = new Date().getTime();
-                            const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}&limit=2&_t=${timestamp}`, {
-                                cache: "no-store",
-                                headers: {
-                                    'Cache-Control': 'no-cache',
-                                    'Pragma': 'no-cache'
-                                }
-                            });
-                            const data = await response.json();
-
-                            // レスポンスが配列か、Itemsを持つか、単一オブジェクトかを確認
-                            let records = [];
-                            if (Array.isArray(data)) {
-                                records = data;
-                            } else if (data.Items) {
-                                records = data.Items;
-                            } else {
-                                records = [data];
-                            }
-
-                            console.log('Consecutive Check Records:', records);
-
-                            if (records.length >= 2) {
-                                const latest = records[0];
-                                const previous = records[1];
-                                console.log('Latest:', latest.is_valid, latest.timestamp);
-                                console.log('Previous:', previous.is_valid, previous.timestamp);
-
-                                // 両方ともis_valid=trueかチェック
-                                // かつ、両方とも召喚後に発生したイベントであることをチェック（セッション内連続成功）
-                                const isLatestNew = latest.timestamp > summonTimestamp;
-                                const isPreviousNew = previous.timestamp > summonTimestamp;
-
-                                if (latest.is_valid === true && previous.is_valid === true) {
-                                    if (isLatestNew && isPreviousNew) {
-                                        console.log('連続成功検出 (セッション内)！モデルチェンジを実行');
-                                        triggerModelChange();
-                                    } else {
-                                        console.log('連続成功ですが、セッション前のデータが含まれるため無視します:', previous.timestamp);
-                                    }
-                                }
-                            }
-                        } catch (error) {
-                            console.error('連続成功チェックエラー:', error);
-                        }
-                    }
-
-                    // --- モデルチェンジ関数 ---
-                    function triggerModelChange() {
-                        if (!isSummoned) return;
-                        if (hasChangedToRecycleBuddy) return;
-
-                        hasChangedToRecycleBuddy = true;
-
-                        // Happy/Angryモデルを非表示
-                        hideAllModels();
-
-                        // WBFマーカー上にRecycle Buddyを作成
-                        recycleBuddyModel = document.createElement('a-gltf-model');
-                        recycleBuddyModel.setAttribute('src', '#buddy-asset');
-                        recycleBuddyModel.setAttribute('position', '0 0 0');
-                        recycleBuddyModel.setAttribute('rotation', '0 0 0');
-                        recycleBuddyModel.setAttribute('scale', '1.5 1.5 1.5');
-                        recycleBuddyModel.setAttribute('animation-mixer', 'loop: repeat');
-                        recycleBuddyModel.setAttribute('visible', true);
-
-                        // WBFマーカーのmodel-containerに追加
-                        const modelContainer = document.getElementById('model-container');
-                        if (modelContainer) {
-                            modelContainer.appendChild(recycleBuddyModel);
-                        }
-
-                        // メッセージ更新
-                        const messageBox = document.getElementById('message-box');
-                        if (messageBox) {
-                            messageBox.innerText = 'すごい！2回連続成功や！リサイクルバディ登場！';
-                        }
-
-                        // お祝いエフェクト（アイコン）
-                        showEmotionIcons('celebrate');
-
-
-
-                        console.log('モデルチェンジ完了: Recycle Buddy表示');
-                    }
-
-                    // 2秒ごとにチェック (Performance: Reduced from 1s)
-                    setInterval(checkEmotionData, 2000);
-                    console.log('データの監視を開始しました');
+                    showModel('angry');
                 });
+
+                // --- シンプルなエフェクト関数 ---
+                function showEffect(markerElement) {
+                    console.log('✨ Effect triggered!');
+                    // 簡易的なログ出力のみ（パーティクルは互換性問題のため削除）
+                }
+
+                let currentVisibleMarker = null;
+                let currentTargetModel = null;
+
+                // --- マーカー検出時の処理 ---
+                function handleMarkerFound(marker, model) {
+                    currentVisibleMarker = marker;
+                    currentTargetModel = model;
+
+                    if (!isSummoned) {
+                        // 召喚前：ボタンを表示、モデルを隠す
+                        summonBtn.style.display = 'block';
+                        hideAllModels();
+                    } else {
+                        // 既に召喚済みなら、Joyfulまたは現在のエモーションを表示
+                        if (marker === wbfMarker) {
+                            if (currentEmotion) {
+                                showModel(currentEmotion);
+                            } else {
+                                showJoyful();
+                            }
+                        } else if (currentTargetModel) {
+                            currentTargetModel.setAttribute('visible', true);
+                        }
+                    }
+                }
+
+                // --- マーカーロスト時の処理 ---
+                function handleMarkerLost() {
+                    summonBtn.style.display = 'none';
+                    // isSummonedはリセットしない（一度召喚したら次回も表示）
+
+                    // エモーション状態をリセット（再検出時は待機状態に戻す）
+                    currentEmotion = null;
+
+                    // 全モデル非表示
+                    hideAllModels();
+                    if (currentTargetModel) currentTargetModel.setAttribute('visible', false);
+                    if (buddyModel) buddyModel.setAttribute('visible', false);
+
+                    currentVisibleMarker = null;
+                    currentTargetModel = null;
+                    currentParticles = null;
+                }
+
+                // イベントリスナー登録 (マーカーがある場合のみ)
+                if (wbfMarker) {
+                    wbfMarker.addEventListener('markerFound', () => {
+                        handleMarkerFound(wbfMarker, null);
+                    });
+                    wbfMarker.addEventListener('markerLost', handleMarkerLost);
+                }
+
+                if (hiroMarker) {
+                    hiroMarker.addEventListener('markerFound', () => {
+                        handleMarkerFound(hiroMarker, buddyModel);
+                    });
+                    hiroMarker.addEventListener('markerLost', handleMarkerLost);
+                }
+
+                // --- 召喚ボタンクリックイベント ---
+                summonBtn.addEventListener('click', () => {
+                    if (currentVisibleMarker) {
+                        summonBtn.style.display = 'none';
+                        isSummoned = true; // フラグON
+
+                        // Joyful（待機状態）を表示
+                        if (currentVisibleMarker === wbfMarker) {
+                            showJoyful();
+                        } else if (currentTargetModel) {
+                            // Hiroマーカーの場合も非表示
+                            currentTargetModel.setAttribute('visible', false);
+                        }
+
+                        // 過去のデータを無視するために、フラグを立てる
+                        // 最初のAPI取得時に、その時点のサーバー最新時刻をベースラインとして取得する
+                        isFirstPoll = true;
+                        console.log('Summoned! Waiting for first poll to sync timestamp...');
+
+                        console.log('召喚完了。Joyful（待機状態）を表示。データベースの更新を待機中...');
+                    }
+                });
+
+                // --- API設定 ---
+                let API_ENDPOINT = '';
+                const USER_ID = 'webapp_user';
+
+                // 設定を読み込む
+                async function loadConfig() {
+                    try {
+                        const response = await fetch('./amplify_outputs.json');
+                        const config = await response.json();
+                        if (config.custom && config.custom.API) {
+                            const apiName = Object.keys(config.custom.API)[0];
+                            API_ENDPOINT = config.custom.API[apiName].endpoint;
+                            // 末尾のスラッシュを削除
+                            if (API_ENDPOINT.endsWith('/')) {
+                                API_ENDPOINT = API_ENDPOINT.slice(0, -1);
+                            }
+                            console.log('API Endpoint loaded:', API_ENDPOINT);
+                        } else {
+                            console.warn('API configuration not found in amplify_outputs.json');
+                        }
+                    } catch (error) {
+                        console.error('設定ファイルの読み込みエラー:', error);
+                    }
+                }
+
+                loadConfig();
+
+                // --- DBから感情データを取得する関数 ---
+                async function checkEmotionData() {
+                    if (!isSummoned) return; // 召喚前は何もしない
+                    if (!API_ENDPOINT) return;
+
+                    try {
+                        // キャッシュ回避のためにタイムスタンプ付与
+                        // キャッシュ回避
+                        const timestamp = new Date().getTime();
+                        const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}&_t=${timestamp}`, {
+                            cache: "no-store",
+                            headers: {
+                                'Cache-Control': 'no-cache',
+                                'Pragma': 'no-cache'
+                            }
+                        });
+                        const data = await response.json();
+
+                        // デバッグログ
+                        console.log('Fetched Data:', data);
+
+                        // 初回ポール時の同期処理
+                        if (isFirstPoll) {
+                            if (data.timestamp) {
+                                lastProcessedTimestamp = data.timestamp;
+                                summonTimestamp = data.timestamp; // Session baseline
+                                console.log('Synced valid baseline timestamp from server:', lastProcessedTimestamp);
+                            } else {
+                                // データがない場合は現在時刻(ISO)を入れておく（念のため）
+                                // ただしサーバー時計とのズレリスクはあるが、データ空なら次は確実に来るのでOK
+                                lastProcessedTimestamp = new Date().toISOString();
+                                summonTimestamp = lastProcessedTimestamp;
+                                console.log('No data on server, set baseline to local time:', lastProcessedTimestamp);
+                            }
+                            isFirstPoll = false;
+                            return; // 初回は同期のみで終了（反応しない）
+                        }
+
+                        console.log('Timestamp check:', data.timestamp, lastProcessedTimestamp);
+
+                        if (data.timestamp && data.timestamp > lastProcessedTimestamp) {
+                            console.log(`New data detected! Timestamp: ${data.timestamp} > ${lastProcessedTimestamp}`);
+                            lastProcessedTimestamp = data.timestamp;
+
+                            if (data.has_change === false) {
+                                console.log('has_change is false, ignoring.');
+                                return;
+                            }
+
+                            console.log(`Processing emotion. is_valid: ${data.is_valid}, isSummoned: ${isSummoned}`);
+
+                            if (typeof data.is_valid !== 'undefined') {
+                                if (data.is_valid) {
+                                    showModel('happy');
+                                    // 連続成功チェック
+                                    await checkConsecutiveSuccess(data.timestamp);
+                                } else {
+                                    showModel('angry');
+                                }
+                            } else if (data.emotion) {
+                                showModel(data.emotion);
+                            }
+
+                            if (data.message) {
+                                const messageBox = document.getElementById('message-box');
+                                if (messageBox) {
+                                    messageBox.innerText = data.message;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('データの取得エラー:', error);
+                    }
+                }
+
+                // --- 連続成功チェック関数 ---
+                async function checkConsecutiveSuccess(currentTimestamp) {
+                    if (hasChangedToRecycleBuddy) return; // 既にモデルチェンジ済み
+
+                    try {
+                        // 最新2件を取得
+                        // 最新2件を取得（キャッシュ回避）
+                        const timestamp = new Date().getTime();
+                        const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}&limit=2&_t=${timestamp}`, {
+                            cache: "no-store",
+                            headers: {
+                                'Cache-Control': 'no-cache',
+                                'Pragma': 'no-cache'
+                            }
+                        });
+                        const data = await response.json();
+
+                        // レスポンスが配列か、Itemsを持つか、単一オブジェクトかを確認
+                        let records = [];
+                        if (Array.isArray(data)) {
+                            records = data;
+                        } else if (data.Items) {
+                            records = data.Items;
+                        } else {
+                            records = [data];
+                        }
+
+                        console.log('Consecutive Check Records:', records);
+
+                        if (records.length >= 2) {
+                            const latest = records[0];
+                            const previous = records[1];
+                            console.log('Latest:', latest.is_valid, latest.timestamp);
+                            console.log('Previous:', previous.is_valid, previous.timestamp);
+
+                            // 両方ともis_valid=trueかチェック
+                            // かつ、両方とも召喚後に発生したイベントであることをチェック（セッション内連続成功）
+                            const isLatestNew = latest.timestamp > summonTimestamp;
+                            const isPreviousNew = previous.timestamp > summonTimestamp;
+
+                            if (latest.is_valid === true && previous.is_valid === true) {
+                                if (isLatestNew && isPreviousNew) {
+                                    console.log('連続成功検出 (セッション内)！モデルチェンジを実行');
+                                    triggerModelChange();
+                                } else {
+                                    console.log('連続成功ですが、セッション前のデータが含まれるため無視します:', previous.timestamp);
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('連続成功チェックエラー:', error);
+                    }
+                }
+
+                // --- モデルチェンジ関数 ---
+                function triggerModelChange() {
+                    if (!isSummoned) return;
+                    if (hasChangedToRecycleBuddy) return;
+
+                    hasChangedToRecycleBuddy = true;
+
+                    // Happy/Angryモデルを非表示
+                    hideAllModels();
+
+                    // WBFマーカー上にRecycle Buddyを作成
+                    recycleBuddyModel = document.createElement('a-gltf-model');
+                    recycleBuddyModel.setAttribute('src', '#buddy-asset');
+                    recycleBuddyModel.setAttribute('position', '0 0 0');
+                    recycleBuddyModel.setAttribute('rotation', '0 0 0');
+                    recycleBuddyModel.setAttribute('scale', '1.5 1.5 1.5');
+                    recycleBuddyModel.setAttribute('animation-mixer', 'loop: repeat');
+                    recycleBuddyModel.setAttribute('visible', true);
+
+                    // WBFマーカーのmodel-containerに追加
+                    const modelContainer = document.getElementById('model-container');
+                    if (modelContainer) {
+                        modelContainer.appendChild(recycleBuddyModel);
+                    }
+
+                    // メッセージ更新
+                    const messageBox = document.getElementById('message-box');
+                    if (messageBox) {
+                        messageBox.innerText = 'すごい！2回連続成功や！リサイクルバディ登場！';
+                    }
+
+                    // お祝いエフェクト（アイコン）
+                    showEmotionIcons('celebrate');
+
+
+
+                    console.log('モデルチェンジ完了: Recycle Buddy表示');
+                }
+
+                // 2秒ごとにチェック (Performance: Reduced from 1s)
+                setInterval(checkEmotionData, 2000);
+                console.log('データの監視を開始しました');
+            });
             } else {
-                console.error("a-scene not found!");
-            }
+            console.error("a-scene not found!");
+        }
         });
 
         // ==========================================
