@@ -605,15 +605,15 @@
                         flash.setAttribute('scale', '0.1 0.1 0.1');
 
                         // Scale up and fade out animation
-                        flash.setAttribute('animation__scale', 'property: scale; to: 5 5 5; dur: 800; easing: easeOutQuad');
-                        flash.setAttribute('animation__fade', 'property: material.opacity; from: 0.8; to: 0; dur: 800; easing: easeOutQuad');
+                        flash.setAttribute('animation__scale', 'property: scale; to: 5 5 5; dur: 3000; easing: easeOutQuad');
+                        flash.setAttribute('animation__fade', 'property: material.opacity; from: 0.8; to: 0; dur: 3000; easing: easeOutQuad');
 
                         parent.appendChild(flash);
 
                         // Remove after animation
                         setTimeout(() => {
                             if (flash.parentNode) flash.parentNode.removeChild(flash);
-                        }, 1000);
+                        }, 3100);
                     }
 
                     // --- モデルチェンジ関数 ---
