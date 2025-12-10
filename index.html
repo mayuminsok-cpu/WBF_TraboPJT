@@ -586,10 +586,7 @@
                                 }
 
                                 if (data.message) {
-                                    const messageBox = document.getElementById('message-box');
-                                    if (messageBox) {
-                                        messageBox.innerText = data.message;
-                                    }
+                                    showMessage(data.message);
                                 }
                             }
                         } catch (error) {
@@ -737,10 +734,7 @@
                                 }
 
                                 // メッセージ更新
-                                const messageBox = document.getElementById('message-box');
-                                if (messageBox) {
-                                    messageBox.innerText = 'すごい！2回連続成功や！リサイクルバディ登場！';
-                                }
+                                showMessage('すごい！2回連続成功や！リサイクルバディ登場！');
 
                                 // お祝いエフェクト（アイコン）
                                 showEmotionIcons('celebrate');
