@@ -154,16 +154,30 @@
             if (scene) {
                 scene.addEventListener('loaded', () => {
                     // --- モデル参照 ---
+                    // Groups
+                    const chibiGroup = document.querySelector('#chibi-group');
+                    const buddyGroup = document.querySelector('#buddy-group');
+
+                    // Chibi Models
                     const joyfulModel = document.querySelector('#joyful-model');
                     const happy1Model = document.querySelector('#happy-1-model');
                     const happy2Model = document.querySelector('#happy-2-model');
                     const happy3Model = document.querySelector('#happy-3-model');
                     const angryModel = document.querySelector('#angry-model');
+
+                    // Buddy Models
+                    const buddyIdleModel = document.querySelector('#buddy-idle-model');
+                    const buddyHappyModel = document.querySelector('#buddy-happy-model');
+                    const buddyAngryModel = document.querySelector('#buddy-angry-model');
+
                     const angerIcon = document.querySelector('#anger-icon');
                     const heartIcon = document.querySelector('#heart-icon');
 
-                    // 全モデルの配列
-                    const allModels = [joyfulModel, happy1Model, happy2Model, happy3Model, angryModel];
+                    // 全モデルの配列 (Chibi + Buddy)
+                    const allModels = [
+                        joyfulModel, happy1Model, happy2Model, happy3Model, angryModel,
+                        buddyIdleModel, buddyHappyModel, buddyAngryModel
+                    ];
 
                     // --- 召喚ロジック変数 ---
                     const summonBtn = document.getElementById('summon-btn');
@@ -240,16 +254,34 @@
                     }
 
                     // --- Joyful（待機状態）を表示 ---
+                    // --- Joyful（待機状態）を表示 ---
                     function showJoyful() {
                         if (!isSummoned) return;
-                        if (hasChangedToRecycleBuddy) return;
-                        hideAllModels();
-                        hideAllModels();
-                        joyfulModel.setAttribute('visible', true);
-                        joyfulModel.setAttribute('scale', '3 3 3'); // Force scale
-                        // Force Animation
-                        if (joyfulModel.components['animation-mixer']) {
-                            joyfulModel.components['animation-mixer'].play();
+
+                        hideAllModels(); // まず全モデル非表示
+
+                        if (hasChangedToRecycleBuddy) {
+                            // 進化後: Buddy Idleを表示
+                            if (buddyGroup) buddyGroup.setAttribute('visible', true);
+                            if (chibiGroup) chibiGroup.setAttribute('visible', false);
+
+                            if (buddyIdleModel) {
+                                buddyIdleModel.setAttribute('visible', true);
+                                if (buddyIdleModel.components['animation-mixer']) {
+                                    buddyIdleModel.components['animation-mixer'].play();
+                                }
+                            }
+                        } else {
+                            // 進化前: Chibi Joyfulを表示
+                            if (buddyGroup) buddyGroup.setAttribute('visible', false);
+                            if (chibiGroup) chibiGroup.setAttribute('visible', true);
+
+                            joyfulModel.setAttribute('visible', true);
+                            joyfulModel.setAttribute('scale', '3 3 3'); // Force scale
+                            // Force Animation
+                            if (joyfulModel.components['animation-mixer']) {
+                                joyfulModel.components['animation-mixer'].play();
+                            }
                         }
                     }
 
@@ -268,14 +300,10 @@
 
 
                     // --- モデル切り替え関数（ランダム選択） ---
+                    // --- モデル切り替え関数（ランダム選択 + バディ対応） ---
                     function showModel(emotion) {
                         console.log(`showModel called with: ${emotion}. isSummoned: ${isSummoned}, hasChangedToRecycleBuddy: ${hasChangedToRecycleBuddy}`);
                         if (!isSummoned) return;
-                        // モデルチェンジ済みの場合は何もしない
-                        if (hasChangedToRecycleBuddy) {
-                            console.log('Skipping showModel because Recycle Buddy is active.');
-                            return;
-                        }
 
                         // 既存のタイムアウトをクリア
                         if (emotionTimeout) {
@@ -283,52 +311,77 @@
                             emotionTimeout = null;
                         }
 
-                        hideAllModels();
+                        hideAllModels(); // 全モデル非表示（グループの切り替えはここで行わないほうが安全だが、念のため）
                         currentEmotion = emotion;
 
-                        if (emotion === 'happy') {
-                            // ランダムでHappy1, 2, 3を選択
-                            const rand = Math.random();
-                            let randomHappy;
-                            if (rand < 0.33) randomHappy = happy1Model;
-                            else if (rand < 0.66) randomHappy = happy2Model;
-                            else randomHappy = happy3Model;
+                        // 進化後に Buddy Group を表示する前提
+                        if (hasChangedToRecycleBuddy) {
+                            if (buddyGroup) buddyGroup.setAttribute('visible', true);
+                            if (chibiGroup) chibiGroup.setAttribute('visible', false);
+                        } else {
+                            if (buddyGroup) buddyGroup.setAttribute('visible', false);
+                            if (chibiGroup) chibiGroup.setAttribute('visible', true);
+                        }
 
-                            randomHappy.setAttribute('visible', true);
-                            randomHappy.setAttribute('scale', '3 3 3'); // Force scale
-                            if (randomHappy.components['animation-mixer']) {
-                                randomHappy.components['animation-mixer'].play();
+                        if (emotion === 'happy') {
+                            if (hasChangedToRecycleBuddy) {
+                                // --- Buddy Happy ---
+                                buddyHappyModel.setAttribute('visible', true);
+                                if (buddyHappyModel.components['animation-mixer']) {
+                                    buddyHappyModel.components['animation-mixer'].play();
+                                }
+                                console.log(`Showing Buddy Happy Model`);
+                            } else {
+                                // --- Chibi Happy (Random) ---
+                                const rand = Math.random();
+                                let randomHappy;
+                                if (rand < 0.33) randomHappy = happy1Model;
+                                else if (rand < 0.66) randomHappy = happy2Model;
+                                else randomHappy = happy3Model;
+
+                                randomHappy.setAttribute('visible', true);
+                                randomHappy.setAttribute('scale', '3 3 3');
+                                if (randomHappy.components['animation-mixer']) {
+                                    randomHappy.components['animation-mixer'].play();
+                                }
+                                console.log(`Showing Happy Model: ${randomHappy.id}`);
                             }
 
-                            // 画面固定のハートアイコンを表示
+                            // 共通: 固定アイコン
                             showEmotionIcons('happy');
 
-                            console.log(`Showing Happy Model: ${randomHappy.id}`);
-
-                            // アニメーション終了後にJoyfulに戻る
+                            // 3秒後に戻る
                             emotionTimeout = setTimeout(() => {
                                 showJoyful();
-                            }, 3000); // 3秒後（アニメーション時間に応じて調整）
+                            }, 3000);
 
                         } else if (emotion === 'angry') {
-                            // Angryは1つ
-                            angryModel.setAttribute('visible', true);
-                            angryModel.setAttribute('scale', '3 3 3'); // Force scale
-                            if (angryModel.components['animation-mixer']) {
-                                angryModel.components['animation-mixer'].play();
+                            if (hasChangedToRecycleBuddy) {
+                                // --- Buddy Angry ---
+                                buddyAngryModel.setAttribute('visible', true);
+                                if (buddyAngryModel.components['animation-mixer']) {
+                                    buddyAngryModel.components['animation-mixer'].play();
+                                }
+                                applyRedTint(buddyAngryModel);
+                                console.log(`Showing Buddy Angry Model`);
+                            } else {
+                                // --- Chibi Angry ---
+                                angryModel.setAttribute('visible', true);
+                                angryModel.setAttribute('scale', '3 3 3');
+                                if (angryModel.components['animation-mixer']) {
+                                    angryModel.components['animation-mixer'].play();
+                                }
+                                applyRedTint(angryModel);
+                                console.log(`Showing Angry Model: ${angryModel.id}`);
                             }
-                            // 赤くする
-                            applyRedTint(angryModel);
 
-                            // 画面固定の怒りアイコンを表示
+                            // 共通: 固定アイコン
                             showEmotionIcons('angry');
 
-                            console.log(`Showing Angry Model: ${angryModel.id}`);
-
-                            // アニメーション終了後にJoyfulに戻る（アイコンも非表示）
+                            // 3秒後に戻る
                             emotionTimeout = setTimeout(() => {
                                 showJoyful();
-                            }, 3000); // 3秒後（アニメーション時間に応じて調整）
+                            }, 3000);
                         }
                     }
 
@@ -669,18 +722,16 @@
                                 // Happy/Angryモデルを非表示
                                 hideAllModels();
 
-                                // WBFマーカー上にRecycle Buddyを作成
-                                recycleBuddyModel = document.createElement('a-gltf-model');
-                                recycleBuddyModel.setAttribute('src', '#buddy-asset');
-                                recycleBuddyModel.setAttribute('position', '0 0 0');
-                                recycleBuddyModel.setAttribute('rotation', '0 0 0');
-                                recycleBuddyModel.setAttribute('scale', '3 3 3');
-                                recycleBuddyModel.setAttribute('animation-mixer', 'loop: repeat');
-                                recycleBuddyModel.setAttribute('visible', true);
+                                // グループの切り替え
+                                if (chibiGroup) chibiGroup.setAttribute('visible', false);
+                                if (buddyGroup) buddyGroup.setAttribute('visible', true);
 
-                                // WBFマーカーのmodel-containerに追加
-                                if (modelContainer) {
-                                    modelContainer.appendChild(recycleBuddyModel);
+                                // バディのIdleを表示
+                                if (buddyIdleModel) {
+                                    buddyIdleModel.setAttribute('visible', true);
+                                    if (buddyIdleModel.components['animation-mixer']) {
+                                        buddyIdleModel.components['animation-mixer'].play();
+                                    }
                                 }
 
                                 // メッセージ更新
