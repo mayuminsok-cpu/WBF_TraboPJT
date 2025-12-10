@@ -294,6 +294,8 @@
                                 // 元のマテリアルカラーを保存（必要なら）
                                 // ここではシンプルに赤くする
                                 node.material.color.setHex(0xFF0000); // Pure Red
+                                node.material.emissive.setHex(0xFF0000); // Glowing Red
+                                node.material.emissiveIntensity = 2.0;   // High Intensity
                             }
                         });
                     }
