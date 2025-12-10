@@ -522,6 +522,33 @@
 
                     loadConfig();
 
+                    // --- メッセージ表示関数 (Typewriter Effect) ---
+                    let messageTypewriterTimeout = null;
+                    function showMessage(text) {
+                        const messageBox = document.getElementById('message-box');
+                        if (!messageBox) return;
+
+                        // 既存の表示処理をキャンセル
+                        if (messageTypewriterTimeout) {
+                            clearTimeout(messageTypewriterTimeout);
+                            messageTypewriterTimeout = null;
+                        }
+
+                        messageBox.innerText = ''; // クリア
+
+                        let i = 0;
+                        const speed = 50; // 1文字あたりの表示速度 (ms)
+
+                        function type() {
+                            if (i < text.length) {
+                                messageBox.innerText += text.charAt(i);
+                                i++;
+                                messageTypewriterTimeout = setTimeout(type, speed);
+                            }
+                        }
+                        type();
+                    }
+
                     // --- DBから感情データを取得する関数 ---
                     async function checkEmotionData() {
                         if (!isSummoned) return; // 召喚前は何もしない
