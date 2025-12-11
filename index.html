@@ -627,6 +627,8 @@
                                         await checkConsecutiveSuccess(data.timestamp);
                                     } else {
                                         showModel('angry');
+                                        // 連続失敗チェック (進化時のみ)
+                                        await checkConsecutiveFailure(data.timestamp);
                                     }
                                 } else if (data.emotion) {
                                     showModel(data.emotion);
@@ -693,6 +695,73 @@
                         } catch (error) {
                             console.error('連続成功チェックエラー:', error);
                         }
+                    }
+
+                    // --- 連続失敗チェック関数 (進化後 -> 進化前) ---
+                    async function checkConsecutiveFailure(currentTimestamp) {
+                        if (!hasChangedToRecycleBuddy) return; // 進化していないなら何もしない
+
+                        try {
+                            const timestamp = new Date().getTime();
+                            const response = await fetch(`${API_ENDPOINT}/data?userId=${USER_ID}&limit=2&_t=${timestamp}`, {
+                                cache: "no-store",
+                                headers: {
+                                    'Cache-Control': 'no-cache',
+                                    'Pragma': 'no-cache'
+                                }
+                            });
+                            const data = await response.json();
+
+                            let records = [];
+                            if (Array.isArray(data)) {
+                                records = data;
+                            } else if (data.Items) {
+                                records = data.Items;
+                            } else {
+                                records = [data];
+                            }
+
+                            if (records.length >= 2) {
+                                const latest = records[0];
+                                const previous = records[1];
+
+                                const isLatestNew = latest.timestamp > summonTimestamp;
+                                const isPreviousNew = previous.timestamp > summonTimestamp;
+
+                                // 両方とも is_valid = false かつセッション内データ
+                                if (latest.is_valid === false && previous.is_valid === false) {
+                                    if (isLatestNew && isPreviousNew) {
+                                        console.log('連続失敗検出 (Devolution)！進化前に戻ります');
+
+                                        // 怒りモーションを見せるために少し待機してから戻す
+                                        setTimeout(() => {
+                                            triggerDevolution();
+                                        }, 4000); // 4秒後 (Angryモーションは3秒でJoyfulに戻ろうとするので、その直後くらい)
+                                    }
+                                }
+                            }
+                        } catch (error) {
+                            console.error('連続失敗チェックエラー:', error);
+                        }
+                    }
+
+                    // --- 退化（Devolution）関数 ---
+                    function triggerDevolution() {
+                        if (!hasChangedToRecycleBuddy) return;
+
+                        hasChangedToRecycleBuddy = false;
+                        console.log('--- DEVOLUTION TRIGGERED ---');
+
+                        // エフェクトなどは特になしでスッと戻る、あるいは簡単なフェード?
+                        // ここでは直ちに切り替える
+                        hideAllModels();
+
+                        // Chibi Groupを表示
+                        if (buddyGroup) buddyGroup.setAttribute('visible', false);
+                        if (chibiGroup) chibiGroup.setAttribute('visible', true);
+
+                        // Joyful (Idle) 状態に戻す
+                        showJoyful();
                     }
 
                     // --- 進化演出エフェクト (Flash) ---
