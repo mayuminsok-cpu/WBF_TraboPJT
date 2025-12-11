@@ -833,14 +833,25 @@
                     function triggerDevolution() {
                         if (currentEvolutionStage <= 0) return;
 
-                        currentEvolutionStage--; // ステージ降格
-                        lastStageChangeTimestamp = new Date().getTime(); // Update timestamp
-                        console.log(`--- DEVOLUTION TRIGGERED --- New Stage: ${currentEvolutionStage}`);
+                        // 1. エフェクト開始
+                        const modelContainer = document.getElementById('model-container');
+                        if (modelContainer) {
+                            createFlashEffect(modelContainer);
+                            createSparkleEffect(modelContainer);
+                        }
 
-                        hideAllModels();
+                        // 2. フラッシュに合わせてモデル切り替え (0.5秒後)
+                        setTimeout(() => {
+                            currentEvolutionStage--; // ステージ降格
+                            lastStageChangeTimestamp = new Date().getTime(); // Update timestamp
+                            console.log(`--- DEVOLUTION TRIGGERED --- New Stage: ${currentEvolutionStage}`);
 
-                        // エフェクトなどは特になしでスッと戻る
-                        showJoyful(); // 新しいステージの待機状態を表示
+                            hideAllModels();
+
+                            // 新しいステージの待機状態を表示
+                            showJoyful();
+                            showMessage('残念... 退化してしまった...');
+                        }, 500);
                     }
 
                     // --- 進化演出エフェクト (Flash) ---
