@@ -68,7 +68,8 @@
             white-space: nowrap;
             /* Prevent text wrapping */
             border: 3px solid #fff;
-            display: none;
+            display: block;
+            /* Forced visible for debugging/usability */
             /* Initially hidden */
             z-index: 2000;
         }
@@ -140,7 +141,12 @@
     </style>
     <script>
         window.onerror = function (msg, url, line, col, error) {
-            alert("Error: " + msg + "\nLine: " + line + "\nCol: " + col);
+            const status = document.getElementById('status');
+            if (status) {
+                status.innerHTML = `ERR: ${msg} <br> L${line}`;
+                status.style.color = 'red';
+                status.style.background = 'white';
+            }
             console.error(error);
         };
 
@@ -482,6 +488,11 @@
                     function handleMarkerFound(marker, model) {
                         currentVisibleMarker = marker;
                         currentTargetModel = model;
+
+                        // Debug log
+                        if (document.getElementById('message-box')) {
+                            document.getElementById('message-box').innerText = "Marker Found!";
+                        }
 
                         if (!isSummoned) {
                             // 召喚前：ボタンを表示、モデルを隠す
