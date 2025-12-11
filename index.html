@@ -130,6 +130,11 @@
         }
     </style>
     <script>
+        window.onerror = function (msg, url, line, col, error) {
+            alert("Error: " + msg + "\nLine: " + line + "\nCol: " + col);
+            console.error(error);
+        };
+
         // --- 状態管理用変数 ---
         let lastProcessedTimestamp = "";
 
@@ -167,7 +172,8 @@
 
                     // Buddy Models
                     const buddyIdleModel = document.querySelector('#buddy-idle-model');
-                    const buddyHappyModel = document.querySelector('#buddy-happy-model');
+                    const buddyHappy1Model = document.querySelector('#buddy-happy-1-model');
+                    const buddyHappy2Model = document.querySelector('#buddy-happy-2-model');
                     const buddyAngryModel = document.querySelector('#buddy-angry-model');
 
                     const angerIcon = document.querySelector('#anger-icon');
@@ -176,7 +182,7 @@
                     // 全モデルの配列 (Chibi + Buddy)
                     const allModels = [
                         joyfulModel, happy1Model, happy2Model, happy3Model, angryModel,
-                        buddyIdleModel, buddyHappyModel, buddyAngryModel
+                        buddyIdleModel, buddyHappy1Model, buddyHappy2Model, buddyAngryModel
                     ];
 
                     // --- 召喚ロジック変数 ---
@@ -327,12 +333,17 @@
 
                         if (emotion === 'happy') {
                             if (hasChangedToRecycleBuddy) {
-                                // --- Buddy Happy ---
-                                buddyHappyModel.setAttribute('visible', true);
-                                if (buddyHappyModel.components['animation-mixer']) {
-                                    buddyHappyModel.components['animation-mixer'].play();
+                                // --- Buddy Happy (Random) ---
+                                const rand = Math.random();
+                                let randomHappy;
+                                if (rand < 0.5) randomHappy = buddyHappy1Model;
+                                else randomHappy = buddyHappy2Model;
+
+                                randomHappy.setAttribute('visible', true);
+                                if (randomHappy.components['animation-mixer']) {
+                                    randomHappy.components['animation-mixer'].play();
                                 }
-                                console.log(`Showing Buddy Happy Model`);
+                                console.log(`Showing Buddy Happy Model: ${randomHappy.id}`);
                             } else {
                                 // --- Chibi Happy (Random) ---
                                 const rand = Math.random();
@@ -792,7 +803,8 @@
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const source = audioContext.createMediaStreamSource(stream);
-                const processor = audioContext.createScriptProcessor(4096, 1, 1);
+                // Buffer size reduced to 1024 to minimize latency (approx 42ms at 24kHz)
+                const processor = audioContext.createScriptProcessor(1024, 1, 1);
 
                 source.connect(processor);
                 processor.connect(audioContext.destination);
@@ -946,11 +958,11 @@
             <!-- Joyful (idle/waiting state) -->
             <a-asset-item id="joyful-asset" src="chibi_remake_Animation_Idle_4_withSkin.glb?v=1"></a-asset-item>
 
-            <!-- Recycle Buddy (Replaced with base.glb) -->
-            <a-asset-item id="buddy-asset" src="base.glb"></a-asset-item>
-            <!-- Buddy Happy/Angry Placeholders (using base.glb for now) -->
-            <a-asset-item id="buddy-happy-asset" src="base.glb"></a-asset-item>
-            <a-asset-item id="buddy-angry-asset" src="base.glb"></a-asset-item>
+            <!-- Recycle Buddy (Evolved Stage) -->
+            <a-asset-item id="buddy-idle-asset" src="revel2_idle.glb"></a-asset-item>
+            <a-asset-item id="buddy-happy-1-asset" src="revel2_happy1.glb"></a-asset-item>
+            <a-asset-item id="buddy-happy-2-asset" src="revel2_happy2.glb"></a-asset-item>
+            <a-asset-item id="buddy-angry-asset" src="revel2_angry.glb"></a-asset-item>
         </a-assets>
 
         <!-- Custom Marker -->
@@ -992,16 +1004,19 @@
                 <!-- Buddy Group (Evolved Stage) -->
                 <a-entity id="buddy-group" visible="false">
                     <!-- Buddy Idle (Standard) -->
-                    <a-gltf-model id="buddy-idle-model" src="#buddy-asset" position="0 0 0" rotation="0 0 0"
+                    <a-gltf-model id="buddy-idle-model" src="#buddy-idle-asset" position="0 0 0" rotation="0 0 0"
                         scale="3 3 3" animation-mixer="loop: repeat" visible="false" model-logger>
                     </a-gltf-model>
 
-                    <!-- Buddy Happy (Placeholder) -->
-                    <a-gltf-model id="buddy-happy-model" src="#buddy-happy-asset" position="0 0 0" rotation="0 0 0"
+                    <!-- Buddy Happy (2 variants) -->
+                    <a-gltf-model id="buddy-happy-1-model" src="#buddy-happy-1-asset" position="0 0 0" rotation="0 0 0"
+                        scale="3 3 3" animation-mixer="loop: repeat" visible="false" model-logger>
+                    </a-gltf-model>
+                    <a-gltf-model id="buddy-happy-2-model" src="#buddy-happy-2-asset" position="0 0 0" rotation="0 0 0"
                         scale="3 3 3" animation-mixer="loop: repeat" visible="false" model-logger>
                     </a-gltf-model>
 
-                    <!-- Buddy Angry (Placeholder) -->
+                    <!-- Buddy Angry -->
                     <a-gltf-model id="buddy-angry-model" src="#buddy-angry-asset" position="0 0 0" rotation="0 0 0"
                         scale="3 3 3" animation-mixer="loop: repeat" visible="false" model-logger>
                     </a-gltf-model>
