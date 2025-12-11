@@ -168,30 +168,24 @@
             if (scene) {
                 scene.addEventListener('loaded', () => {
                     // --- モデル参照 ---
+                    // Stage 3 Models
+                    const stage3IdleModel = document.querySelector('#stage3-idle-model');
+                    const stage3HappyModel = document.querySelector('#stage3-happy-model');
+                    const stage3AngryModel = document.querySelector('#stage3-angry-model');
+
                     // Groups
                     const chibiGroup = document.querySelector('#chibi-group');
-                    const buddyGroup = document.querySelector('#buddy-group');
-
-                    // Chibi Models
-                    const joyfulModel = document.querySelector('#joyful-model');
-                    const happy1Model = document.querySelector('#happy-1-model');
-                    const happy2Model = document.querySelector('#happy-2-model');
-                    const happy3Model = document.querySelector('#happy-3-model');
-                    const angryModel = document.querySelector('#angry-model');
-
-                    // Buddy Models
-                    const buddyIdleModel = document.querySelector('#buddy-idle-model');
-                    const buddyHappy1Model = document.querySelector('#buddy-happy-1-model');
-                    const buddyHappy2Model = document.querySelector('#buddy-happy-2-model');
-                    const buddyAngryModel = document.querySelector('#buddy-angry-model');
+                    const buddyGroup = document.querySelector('#buddy-group'); // Stage 2
+                    const stage3Group = document.querySelector('#stage3-group'); // Stage 3
 
                     const angerIcon = document.querySelector('#anger-icon');
                     const heartIcon = document.querySelector('#heart-icon');
 
-                    // 全モデルの配列 (Chibi + Buddy)
+                    // 全モデルの配列
                     const allModels = [
                         joyfulModel, happy1Model, happy2Model, happy3Model, angryModel,
-                        buddyIdleModel, buddyHappy1Model, buddyHappy2Model, buddyAngryModel
+                        buddyIdleModel, buddyHappy1Model, buddyHappy2Model, buddyAngryModel,
+                        stage3IdleModel, stage3HappyModel, stage3AngryModel
                     ];
 
                     // --- 召喚ロジック変数 ---
@@ -202,7 +196,7 @@
 
                     // 召喚状態フラグ
                     let isSummoned = false;
-                    let hasChangedToRecycleBuddy = false; // モデルチェンジ済みフラグ
+                    let currentEvolutionStage = 0; // 0: Chibi, 1: Recycle Buddy, 2: Super Buddy
                     let recycleBuddyModel = null; // WBFマーカー上のRecycle Buddyモデル
                     let currentEmotion = null; // 現在のエモーション
                     let emotionTimeout = null; // エモーション終了後のタイムアウト
@@ -270,13 +264,27 @@
 
                     // --- Joyful（待機状態）を表示 ---
                     // --- Joyful（待機状態）を表示 ---
+                    // --- Joyful（待機状態）を表示 ---
                     function showJoyful() {
                         if (!isSummoned) return;
 
                         hideAllModels(); // まず全モデル非表示
 
-                        if (hasChangedToRecycleBuddy) {
-                            // 進化後: Buddy Idleを表示
+                        if (currentEvolutionStage === 2) {
+                            // Stage 3: Super Buddy
+                            if (stage3Group) stage3Group.setAttribute('visible', true);
+                            if (buddyGroup) buddyGroup.setAttribute('visible', false);
+                            if (chibiGroup) chibiGroup.setAttribute('visible', false);
+
+                            if (stage3IdleModel) {
+                                stage3IdleModel.setAttribute('visible', true);
+                                if (stage3IdleModel.components['animation-mixer']) {
+                                    stage3IdleModel.components['animation-mixer'].play();
+                                }
+                            }
+                        } else if (currentEvolutionStage === 1) {
+                            // Stage 2: Recycle Buddy
+                            if (stage3Group) stage3Group.setAttribute('visible', false);
                             if (buddyGroup) buddyGroup.setAttribute('visible', true);
                             if (chibiGroup) chibiGroup.setAttribute('visible', false);
 
@@ -287,13 +295,13 @@
                                 }
                             }
                         } else {
-                            // 進化前: Chibi Joyfulを表示
+                            // Stage 0: Chibi
+                            if (stage3Group) stage3Group.setAttribute('visible', false);
                             if (buddyGroup) buddyGroup.setAttribute('visible', false);
                             if (chibiGroup) chibiGroup.setAttribute('visible', true);
 
                             joyfulModel.setAttribute('visible', true);
                             joyfulModel.setAttribute('scale', '3 3 3'); // Force scale
-                            // Force Animation
                             if (joyfulModel.components['animation-mixer']) {
                                 joyfulModel.components['animation-mixer'].play();
                             }
@@ -319,7 +327,7 @@
                     // --- モデル切り替え関数（ランダム選択） ---
                     // --- モデル切り替え関数（ランダム選択 + バディ対応） ---
                     function showModel(emotion) {
-                        console.log(`showModel called with: ${emotion}. isSummoned: ${isSummoned}, hasChangedToRecycleBuddy: ${hasChangedToRecycleBuddy}`);
+                        console.log(`showModel called with: ${emotion}. isSummoned: ${isSummoned}, Stage: ${currentEvolutionStage}`);
                         if (!isSummoned) return;
 
                         // 既存のタイムアウトをクリア
@@ -328,21 +336,47 @@
                             emotionTimeout = null;
                         }
 
-                        hideAllModels(); // 全モデル非表示（グループの切り替えはここで行わないほうが安全だが、念のため）
+                        hideAllModels(); // 全モデル非表示
                         currentEmotion = emotion;
 
-                        // 進化後に Buddy Group を表示する前提
-                        if (hasChangedToRecycleBuddy) {
+                        // グループ表示切り替え
+                        if (currentEvolutionStage === 2) {
+                            if (stage3Group) stage3Group.setAttribute('visible', true);
+                            if (buddyGroup) buddyGroup.setAttribute('visible', false);
+                            if (chibiGroup) chibiGroup.setAttribute('visible', false);
+                        } else if (currentEvolutionStage === 1) {
+                            if (stage3Group) stage3Group.setAttribute('visible', false);
                             if (buddyGroup) buddyGroup.setAttribute('visible', true);
                             if (chibiGroup) chibiGroup.setAttribute('visible', false);
                         } else {
+                            if (stage3Group) stage3Group.setAttribute('visible', false);
                             if (buddyGroup) buddyGroup.setAttribute('visible', false);
                             if (chibiGroup) chibiGroup.setAttribute('visible', true);
                         }
 
+
                         if (emotion === 'happy') {
-                            if (hasChangedToRecycleBuddy) {
-                                // --- Buddy Happy (Random) ---
+                            if (currentEvolutionStage === 2) {
+                                // --- Stage 3 Happy (Placeholder: Idle logic + Gold Color or similar if possible, but user asked for color/particle only) ---
+                                stage3HappyModel.setAttribute('visible', true);
+                                if (stage3HappyModel.components['animation-mixer']) {
+                                    stage3HappyModel.components['animation-mixer'].play();
+                                }
+                                // Happy Effect for Stage 3 (Gold Tint?)
+                                const mesh = stage3HappyModel.getObject3D('mesh');
+                                if (mesh) {
+                                    mesh.traverse((node) => {
+                                        if (node.isMesh) {
+                                            node.material.color.setHex(0xFFD700); // Gold
+                                            node.material.emissive.setHex(0xFFD700);
+                                            node.material.emissiveIntensity = 0.5;
+                                        }
+                                    });
+                                }
+                                console.log(`Showing Stage 3 Happy Model`);
+
+                            } else if (currentEvolutionStage === 1) {
+                                // --- Stage 2 Happy (Random) ---
                                 const rand = Math.random();
                                 let randomHappy;
                                 if (rand < 0.5) randomHappy = buddyHappy1Model;
@@ -354,7 +388,7 @@
                                 }
                                 console.log(`Showing Buddy Happy Model: ${randomHappy.id}`);
                             } else {
-                                // --- Chibi Happy (Random) ---
+                                // --- Stage 0 Chibi Happy (Random) ---
                                 const rand = Math.random();
                                 let randomHappy;
                                 if (rand < 0.33) randomHappy = happy1Model;
@@ -378,8 +412,16 @@
                             }, 3000);
 
                         } else if (emotion === 'angry') {
-                            if (hasChangedToRecycleBuddy) {
-                                // --- Buddy Angry ---
+                            if (currentEvolutionStage === 2) {
+                                // --- Stage 3 Angry ---
+                                stage3AngryModel.setAttribute('visible', true);
+                                if (stage3AngryModel.components['animation-mixer']) {
+                                    stage3AngryModel.components['animation-mixer'].play();
+                                }
+                                applyRedTint(stage3AngryModel);
+                                console.log(`Showing Stage 3 Angry Model`);
+                            } else if (currentEvolutionStage === 1) {
+                                // --- Stage 2 Angry ---
                                 buddyAngryModel.setAttribute('visible', true);
                                 if (buddyAngryModel.components['animation-mixer']) {
                                     buddyAngryModel.components['animation-mixer'].play();
@@ -387,7 +429,7 @@
                                 applyRedTint(buddyAngryModel);
                                 console.log(`Showing Buddy Angry Model`);
                             } else {
-                                // --- Chibi Angry ---
+                                // --- Stage 0 Chibi Angry ---
                                 angryModel.setAttribute('visible', true);
                                 angryModel.setAttribute('scale', '3 3 3');
                                 if (angryModel.components['animation-mixer']) {
@@ -645,7 +687,7 @@
 
                     // --- 連続成功チェック関数 ---
                     async function checkConsecutiveSuccess(currentTimestamp) {
-                        if (hasChangedToRecycleBuddy) return; // 既にモデルチェンジ済み
+                        if (currentEvolutionStage >= 2) return; // 最終進化済みならこれ以上進化しない
 
                         try {
                             // 最新2件を取得
@@ -697,9 +739,9 @@
                         }
                     }
 
-                    // --- 連続失敗チェック関数 (進化後 -> 進化前) ---
+                    // --- 連続失敗チェック関数 (進化後 -> 退化) ---
                     async function checkConsecutiveFailure(currentTimestamp) {
-                        if (!hasChangedToRecycleBuddy) return; // 進化していないなら何もしない
+                        if (currentEvolutionStage <= 0) return; // 初期段階なら何もしない
 
                         try {
                             const timestamp = new Date().getTime();
@@ -1041,6 +1083,8 @@
             <a-asset-item id="buddy-happy-1-asset" src="revel2_happy1.glb"></a-asset-item>
             <a-asset-item id="buddy-happy-2-asset" src="revel2_happy2.glb"></a-asset-item>
             <a-asset-item id="buddy-angry-asset" src="revel2_angry.glb"></a-asset-item>
+            <!-- Level 3 Evolution (Stage 3) -->
+            <a-asset-item id="stage3-asset" src="revel3_idle.glb"></a-asset-item>
         </a-assets>
 
         <!-- Custom Marker -->
@@ -1096,6 +1140,22 @@
 
                     <!-- Buddy Angry -->
                     <a-gltf-model id="buddy-angry-model" src="#buddy-angry-asset" position="0 0 0" rotation="0 0 0"
+                        scale="3 3 3" animation-mixer="loop: repeat" visible="false" model-logger>
+                    </a-gltf-model>
+                </a-entity>
+
+                <!-- Stage 3 Group (Super Evolved) -->
+                <a-entity id="stage3-group" visible="false">
+                    <!-- Stage 3 Idle -->
+                    <a-gltf-model id="stage3-idle-model" src="#stage3-asset" position="0 0 0" rotation="0 0 0"
+                        scale="3 3 3" animation-mixer="loop: repeat" visible="false" model-logger>
+                    </a-gltf-model>
+                    <!-- Stage 3 Happy (Placeholder: Uses idle asset but will be colored Gold) -->
+                    <a-gltf-model id="stage3-happy-model" src="#stage3-asset" position="0 0 0" rotation="0 0 0"
+                        scale="3 3 3" animation-mixer="loop: repeat" visible="false" model-logger>
+                    </a-gltf-model>
+                    <!-- Stage 3 Angry (Placeholder: Uses idle asset but will be colored Red) -->
+                    <a-gltf-model id="stage3-angry-model" src="#stage3-asset" position="0 0 0" rotation="0 0 0"
                         scale="3 3 3" animation-mixer="loop: repeat" visible="false" model-logger>
                     </a-gltf-model>
                 </a-entity>
