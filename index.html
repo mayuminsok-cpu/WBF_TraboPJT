@@ -573,11 +573,17 @@
                             }
 
                             // 過去のデータを無視するために、フラグを立てる
-                            // 最初のAPI取得時に、その時点のサーバー最新時刻をベースラインとして取得する
                             isFirstPoll = true;
                             console.log('Summoned! Waiting for first poll to sync timestamp...');
-
-                            console.log('召喚完了。Joyful（待機状態）を表示。データベースの更新を待機中...');
+                            showMessage('召喚成功！データを待っています...');
+                        } else {
+                            // マーカーが見つからない場合
+                            console.warn("Summon clicked but no marker visible.");
+                            alert("マーカーをカメラに映してからボタンを押してください！");
+                            if (document.getElementById('status')) {
+                                document.getElementById('status').innerText = "マーカーが見つかりません";
+                                document.getElementById('status').style.color = 'red';
+                            }
                         }
                     });
 
