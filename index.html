@@ -665,16 +665,18 @@
                             // デバッグログ
                             console.log('Fetched Data:', data);
 
+                            // タイムスタンプを数値 (Epoch MS) に変換して統一管理
+                            const serverTimeStr = data.timestamp;
+                            const serverTimeEpoch = serverTimeStr ? new Date(serverTimeStr).getTime() : 0;
+
                             // 初回ポール時の同期処理
                             if (isFirstPoll) {
-                                if (data.timestamp) {
-                                    lastProcessedTimestamp = data.timestamp;
-                                    summonTimestamp = data.timestamp; // Session baseline
+                                if (serverTimeEpoch > 0) {
+                                    lastProcessedTimestamp = serverTimeEpoch;
+                                    summonTimestamp = serverTimeEpoch; // Session baseline
                                     console.log('Synced valid baseline timestamp from server:', lastProcessedTimestamp);
                                 } else {
-                                    // データがない場合は現在時刻(ISO)を入れておく（念のため）
-                                    // ただしサーバー時計とのズレリスクはあるが、データ空なら次は確実に来るのでOK
-                                    lastProcessedTimestamp = new Date().toISOString();
+                                    lastProcessedTimestamp = new Date().getTime();
                                     summonTimestamp = lastProcessedTimestamp;
                                     console.log('No data on server, set baseline to local time:', lastProcessedTimestamp);
                                 }
@@ -682,11 +684,10 @@
                                 return; // 初回は同期のみで終了（反応しない）
                             }
 
-                            console.log('Timestamp check:', data.timestamp, lastProcessedTimestamp);
-
-                            if (data.timestamp && data.timestamp > lastProcessedTimestamp) {
-                                console.log(`New data detected! Timestamp: ${data.timestamp} > ${lastProcessedTimestamp}`);
-                                lastProcessedTimestamp = data.timestamp;
+                            // タイムスタンプ比較 (全て数値)
+                            if (serverTimeEpoch > lastProcessedTimestamp) {
+                                console.log(`New data detected! Timestamp: ${serverTimeEpoch} > ${lastProcessedTimestamp}`);
+                                lastProcessedTimestamp = serverTimeEpoch;
 
                                 if (data.has_change === false) {
                                     console.log('has_change is false, ignoring.');
@@ -699,11 +700,11 @@
                                     if (data.is_valid) {
                                         showModel('happy');
                                         // 連続成功チェック
-                                        await checkConsecutiveSuccess(data.timestamp);
+                                        await checkConsecutiveSuccess(serverTimeEpoch);
                                     } else {
                                         showModel('angry');
                                         // 連続失敗チェック (進化時のみ)
-                                        await checkConsecutiveFailure(data.timestamp);
+                                        await checkConsecutiveFailure(serverTimeEpoch);
                                     }
                                 } else if (data.emotion) {
                                     showModel(data.emotion);
@@ -755,8 +756,12 @@
 
                                 // 両方ともis_valid=trueかチェック
                                 // かつ、両方とも召喚後に発生したイベントであることをチェック（セッション内連続成功）
-                                const isLatestNew = latest.timestamp > summonTimestamp && latest.timestamp > lastStageChangeTimestamp;
-                                const isPreviousNew = previous.timestamp > summonTimestamp && previous.timestamp > lastStageChangeTimestamp;
+                                // タイムスタンプをEpoch MSに変換して比較
+                                const latestTs = new Date(latest.timestamp).getTime();
+                                const previousTs = new Date(previous.timestamp).getTime();
+
+                                const isLatestNew = latestTs > summonTimestamp && latestTs > lastStageChangeTimestamp;
+                                const isPreviousNew = previousTs > summonTimestamp && previousTs > lastStageChangeTimestamp;
 
                                 if (latest.is_valid === true && previous.is_valid === true) {
                                     if (isLatestNew && isPreviousNew) {
@@ -800,8 +805,12 @@
                                 const latest = records[0];
                                 const previous = records[1];
 
-                                const isLatestNew = latest.timestamp > summonTimestamp && latest.timestamp > lastStageChangeTimestamp;
-                                const isPreviousNew = previous.timestamp > summonTimestamp && previous.timestamp > lastStageChangeTimestamp;
+                                // タイムスタンプをEpoch MSに変換して比較
+                                const latestTs = new Date(latest.timestamp).getTime();
+                                const previousTs = new Date(previous.timestamp).getTime();
+
+                                const isLatestNew = latestTs > summonTimestamp && latestTs > lastStageChangeTimestamp;
+                                const isPreviousNew = previousTs > summonTimestamp && previousTs > lastStageChangeTimestamp;
 
                                 // 両方とも is_valid = false かつセッション内データ
                                 if (latest.is_valid === false && previous.is_valid === false) {
