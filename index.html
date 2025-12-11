@@ -755,15 +755,15 @@
 
                                 // 両方ともis_valid=trueかチェック
                                 // かつ、両方とも召喚後に発生したイベントであることをチェック（セッション内連続成功）
-                                const isLatestNew = latest.timestamp > summonTimestamp;
-                                const isPreviousNew = previous.timestamp > summonTimestamp;
+                                const isLatestNew = latest.timestamp > summonTimestamp && latest.timestamp > lastStageChangeTimestamp;
+                                const isPreviousNew = previous.timestamp > summonTimestamp && previous.timestamp > lastStageChangeTimestamp;
 
                                 if (latest.is_valid === true && previous.is_valid === true) {
                                     if (isLatestNew && isPreviousNew) {
-                                        console.log('連続成功検出 (セッション内)！モデルチェンジを実行');
+                                        console.log('連続成功検出 (セッション内 + 新規)！モデルチェンジを実行');
                                         triggerModelChange();
                                     } else {
-                                        console.log('連続成功ですが、セッション前のデータが含まれるため無視します:', previous.timestamp);
+                                        console.log('連続成功ですが、前回進化前のデータが含まれるため無視します');
                                     }
                                 }
                             }
@@ -800,13 +800,13 @@
                                 const latest = records[0];
                                 const previous = records[1];
 
-                                const isLatestNew = latest.timestamp > summonTimestamp;
-                                const isPreviousNew = previous.timestamp > summonTimestamp;
+                                const isLatestNew = latest.timestamp > summonTimestamp && latest.timestamp > lastStageChangeTimestamp;
+                                const isPreviousNew = previous.timestamp > summonTimestamp && previous.timestamp > lastStageChangeTimestamp;
 
                                 // 両方とも is_valid = false かつセッション内データ
                                 if (latest.is_valid === false && previous.is_valid === false) {
                                     if (isLatestNew && isPreviousNew) {
-                                        console.log('連続失敗検出 (Devolution)！進化前に戻ります');
+                                        console.log('連続失敗検出 (Devolution)！退化します');
 
                                         // 怒りモーションを見せるために少し待機してから戻す
                                         setTimeout(() => {
@@ -825,6 +825,7 @@
                         if (currentEvolutionStage <= 0) return;
 
                         currentEvolutionStage--; // ステージ降格
+                        lastStageChangeTimestamp = new Date().getTime(); // Update timestamp
                         console.log(`--- DEVOLUTION TRIGGERED --- New Stage: ${currentEvolutionStage}`);
 
                         hideAllModels();
