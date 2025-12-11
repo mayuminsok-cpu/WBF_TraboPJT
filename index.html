@@ -220,6 +220,7 @@
                     let currentEmotion = null; // 現在のエモーション
                     let emotionTimeout = null; // エモーション終了後のタイムアウト
                     let summonTimestamp = 0; // 召喚時刻 (Session Start)
+                    let lastStageChangeTimestamp = 0; // 最終進化/退化時刻 (Strict consecutive check)
                     let lastProcessedTimestamp = 0; // The timestamp of the last processed record
                     let isFirstPoll = false; // Flag to sync timestamp on first poll
 
@@ -574,6 +575,8 @@
 
                             // 過去のデータを無視するために、フラグを立てる
                             isFirstPoll = true;
+                            // Reset stage change timestamp on summon
+                            lastStageChangeTimestamp = 0;
                             console.log('Summoned! Waiting for first poll to sync timestamp...');
                             showMessage('召喚成功！データを待っています...');
                         } else {
@@ -887,6 +890,7 @@
                         if (currentEvolutionStage >= 2) return;
 
                         currentEvolutionStage++; // ステージ昇格
+                        lastStageChangeTimestamp = new Date().getTime(); // Update timestamp
                         console.log(`--- EVOLUTION TRIGGERED --- New Stage: ${currentEvolutionStage}`);
 
                         // 1. Happyエモーションを少し見せるために遅延させる (2.5秒待機)
