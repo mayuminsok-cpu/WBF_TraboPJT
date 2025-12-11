@@ -789,21 +789,15 @@
 
                     // --- 退化（Devolution）関数 ---
                     function triggerDevolution() {
-                        if (!hasChangedToRecycleBuddy) return;
+                        if (currentEvolutionStage <= 0) return;
 
-                        hasChangedToRecycleBuddy = false;
-                        console.log('--- DEVOLUTION TRIGGERED ---');
+                        currentEvolutionStage--; // ステージ降格
+                        console.log(`--- DEVOLUTION TRIGGERED --- New Stage: ${currentEvolutionStage}`);
 
-                        // エフェクトなどは特になしでスッと戻る、あるいは簡単なフェード?
-                        // ここでは直ちに切り替える
                         hideAllModels();
 
-                        // Chibi Groupを表示
-                        if (buddyGroup) buddyGroup.setAttribute('visible', false);
-                        if (chibiGroup) chibiGroup.setAttribute('visible', true);
-
-                        // Joyful (Idle) 状態に戻す
-                        showJoyful();
+                        // エフェクトなどは特になしでスッと戻る
+                        showJoyful(); // 新しいステージの待機状態を表示
                     }
 
                     // --- 進化演出エフェクト (Flash) ---
@@ -857,11 +851,13 @@
 
                     // --- モデルチェンジ関数 ---
                     // --- モデルチェンジ関数 ---
+                    // --- モデルチェンジ関数 ---
                     function triggerModelChange() {
                         if (!isSummoned) return;
-                        if (hasChangedToRecycleBuddy) return;
+                        if (currentEvolutionStage >= 2) return;
 
-                        hasChangedToRecycleBuddy = true;
+                        currentEvolutionStage++; // ステージ昇格
+                        console.log(`--- EVOLUTION TRIGGERED --- New Stage: ${currentEvolutionStage}`);
 
                         // 1. Happyエモーションを少し見せるために遅延させる (2.5秒待機)
                         setTimeout(() => {
@@ -879,25 +875,21 @@
                                 // Happy/Angryモデルを非表示
                                 hideAllModels();
 
-                                // グループの切り替え
-                                if (chibiGroup) chibiGroup.setAttribute('visible', false);
-                                if (buddyGroup) buddyGroup.setAttribute('visible', true);
-
-                                // バディのIdleを表示
-                                if (buddyIdleModel) {
-                                    buddyIdleModel.setAttribute('visible', true);
-                                    if (buddyIdleModel.components['animation-mixer']) {
-                                        buddyIdleModel.components['animation-mixer'].play();
-                                    }
-                                }
+                                // 新しいステージのモデルを表示
+                                showJoyful();
 
                                 // メッセージ更新
-                                showMessage('すごい！2回連続成功や！リサイクルバディ登場！');
+                                if (currentEvolutionStage === 1) {
+                                    showMessage('すごい！2回連続成功や！リサイクルバディに進化したで！');
+                                    console.log('モデルチェンジ完了: Recycle Buddy表示');
+                                } else if (currentEvolutionStage === 2) {
+                                    showMessage('うおおお！さらに進化したで！スーパーバディや！');
+                                    console.log('モデルチェンジ完了: Super Buddy表示');
+                                }
 
                                 // お祝いエフェクト（アイコン）
                                 showEmotionIcons('celebrate');
 
-                                console.log('モデルチェンジ完了: Recycle Buddy表示');
 
                             }, 500); // フラッシュ開始から0.5秒後にモデル切り替え
 
